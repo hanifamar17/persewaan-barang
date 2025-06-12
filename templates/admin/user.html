@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Daftar User</title>
+</head>
+<body>
+    <h2>User List</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <p>
+            {{ message }}
+          </p>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+   
+    <a href="{{ url_for('add_user') }}">
+        <button>add user</button>
+    </a>
+  
+
+    <table border="1" cellpadding="5">
+        <tr>
+            <th>ID</th><th>Name</th><th>Username</th><th>Email</th>
+            <th>Phone</th><th>Address</th><th>Role</th><th>Action</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.user_id }}</td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email or '-' }}</td>
+            <td>{{ user.phone_number or '-' }}</td>
+            <td>{{ user.address or '-' }}</td>
+            <td>{{ user.role }}</td>
+            <td>
+                <a href="{{ url_for('edit_user', user_id=user.user_id) }}">Edit</a>
+                {% if user.role != 'superadmin' %}
+                |
+                <form method="POST" action="{{ url_for('delete_user', user_id=user.user_id) }}" style="display:inline;">
+                    <button type="submit" onclick="return confirm('Delete this user?')">Delete</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <br>
+    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+</body>
+</html>

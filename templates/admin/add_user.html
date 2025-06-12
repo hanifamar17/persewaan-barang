@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add User</title>
+</head>
+<body>
+    <h2>Add New User</h2>
+     {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <p>
+                    {{ message }}
+                </p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+    
+    <form method="POST">
+        <label>Name:</label><br>
+        <input type="text" name="name" required><br><br>
+
+        <label>Username:</label><br>
+        <input type="text" name="username" required><br><br>
+
+        <label>Password:</label><br>
+        <input type="password" name="password" required><br><br>
+
+        <label>Email:</label><br>
+        <input type="email" name="email"><br><br>
+
+        <label>Phone Number:</label><br>
+        <input type="text" name="phone_number"><br><br>
+
+        <label>Address:</label><br>
+        <textarea name="address"></textarea><br><br>
+
+        <label>Role:</label><br>
+        <select name="role" required>
+            <option value="admin">Admin</option>
+            <option value="cs">Customer Service</option>
+        </select><br><br>
+
+        <input type="submit" value="Add User">
+    </form>
+    <br>
+    <a href="{{ url_for('user') }}">Back to User List</a>
+</body>
+</html>

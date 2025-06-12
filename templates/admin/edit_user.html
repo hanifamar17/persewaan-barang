@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Edit User</title>
+</head>
+
+<body>
+    <h2>Edit User</h2>
+    <form method="POST">
+        Name: <input type="text" name="name" value="{{ user.name or '' }}" required><br><br>
+        Username: <input type="text" name="username" value="{{ user.username or '' }}" required><br><br>
+        Email: <input type="email" name="email" value="{{ user.email or '' }}"><br><br>
+        Phone Number: <input type="text" name="phone_number" value="{{ user.phone_number or '' }}"><br><br>
+        Address: <textarea name="address">{{ user.address or '' }}</textarea><br><br>
+
+        {% if user.role != 'superadmin' %}
+        Role:
+        <select name="role">
+            <option value="admin" {% if user.role=='admin' %}selected{% endif %}>Admin</option>
+            <option value="cs" {% if user.role=='cs' %}selected{% endif %}>Customer Service</option>
+        </select><br><br>
+        {% else %}
+        <p><strong>Role: Superadmin (cannot be changed)</strong></p>
+        {% endif %}
+
+        <input type="submit" value="Update User">
+    </form>
+
+
+
+    <br>
+    <a href="{{ url_for('user') }}">Back to User List</a>
+</body>
+
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Dashboard</title>
+</head>
+
+<body>
+    <h1>Welcome, {{ user.username }}!</h1>
+    <p>You are logged in as:
+        <strong>
+            {% if user.role == 'cs' %}
+            Customer Service
+            {% elif user.role == 'admin' %}
+            Admin
+            {% elif user.role == 'superadmin' %}
+            Super Admin
+            {% else %}
+            {{ user.role }}
+            {% endif %}
+        </strong>
+    </p>
+
+
+    {% if user.role in ['admin', 'superadmin'] %}
+    <a href="{{ url_for('user') }}">
+        <button>admin</button>
+    </a>
+    {% endif %}
+
+    <br><br>
+    <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+
+</html>
