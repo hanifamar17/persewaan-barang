@@ -223,7 +223,6 @@ def customers():
 
     return render_template('customers/customer.html', users=customers, user=current_user)
 
-
 # --- Route: Tambah Pelanggan Baru ---
 @app.route('/add_customer', methods=['GET', 'POST'])
 #@login_required
@@ -311,7 +310,23 @@ def edit_customer(customer_id):
     return render_template('customers/edit_customer.html', user=customer_data)
 
 
+## MODULE MANAJEMEN PRODUK
+#--- Route: Halaman Pelanggan --- 
+@app.route('/products')
+#@login_required
+def products():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
 
+    cursor.execute("SELECT * FROM categories")
+    categories = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM products")
+    products = cursor.fetchall()
+
+    conn.close()
+
+    return render_template('products/product.html', categories=categories, products=products, user=current_user)
 
 if __name__ == '__main__':
     app.run(debug=True)
