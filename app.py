@@ -56,21 +56,21 @@ def login():
 
 # --- Route: Logout ---
 @app.route('/logout')
-@login_required
+#@login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
 
 # --- Route: Dashboard (akses berdasarkan role) ---
 @app.route('/dashboard')
-@login_required
+#@login_required
 def dashboard():
     return render_template('index.html', user=current_user)
 
 ## MODULE MANAJEMEN USER
 #--- Route: Halaman user --- 
 @app.route('/user')
-@login_required
+#@login_required
 def user():
     if current_user.role not in ['superadmin', 'admin']:
         return "Access denied", 403
@@ -85,7 +85,7 @@ def user():
 
 # --- Route: Tambah User Baru (Hanya untuk admin) ---
 @app.route('/add_user', methods=['GET', 'POST'])
-@login_required
+#@login_required
 def add_user():
     if current_user.role not in ['superadmin', 'admin']:
         return "Access denied", 403
@@ -117,7 +117,7 @@ def add_user():
 
 #--- Route: Hapus user --- 
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
-@login_required
+#@login_required
 def delete_user(user_id):
     if current_user.role not in ['superadmin', 'admin']:
         return jsonify(status='error', message='Access denied'), 403
@@ -148,7 +148,7 @@ def delete_user(user_id):
 
 
 @app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
-@login_required
+#@login_required
 def edit_user(user_id):
     if current_user.role not in ['superadmin', 'admin']:
         return "Access denied", 403
@@ -213,16 +213,104 @@ def edit_user(user_id):
 
 #--- Route: Halaman Pelanggan --- 
 @app.route('/customers')
-@login_required
+#@login_required
 def customers():
-
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
     cursor.execute("SELECT * FROM customers")
-    users = cursor.fetchall()
+    customers = cursor.fetchall()
     conn.close()
 
-    return render_template('customers/customer.html', users=users, user=current_user)
+    return render_template('customers/customer.html', users=customers, user=current_user)
+
+
+# --- Route: Tambah Pelanggan Baru ---
+@app.route('/add_customer', methods=['GET', 'POST'])
+#@login_required
+def add_customer():
+    if request.method == 'POST':
+        try:
+            name = request.form['name']
+            phone_number = request.form.get('phone_number') or None
+            address = request.form.get('address') or None
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO customers (name, phone_number, address)
+                VALUES (%s, %s, %s)
+            """, (name, phone_number, address))
+            conn.commit()
+            conn.close()
+
+            return jsonify(status="success", message="Pelanggan berhasil ditambahkan")
+        except Exception as e:
+            return jsonify(status="error", message=f"Gagal menambahkan pelanggan: {str(e)}"), 500
+
+    return render_template('customers/add_customer.html', user=current_user)
+
+#--- Route: Hapus pelanggan --- 
+@app.route('/delete_customer/<int:customer_id>', methods=['POST'])
+#@login_required
+def delete_customer(customer_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute("DELETE FROM customers WHERE customer_id = %s", (customer_id,))
+        conn.commit()
+        conn.close()
+        return jsonify(status='success', message='Customer deleted successfully')
+    except Exception as e:
+        conn.close()
+        return jsonify(status='error', message=f'Failed to delete customer: {str(e)}'), 500
+    
+#--- Route: Edit pelanggan --- 
+@app.route('/edit_customer/<int:customer_id>', methods=['GET', 'POST'])
+#@login_required
+def edit_customer(customer_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Ambil data user yang akan diedit
+    cursor.execute("SELECT * FROM customers WHERE customer_id = %s", (customer_id,))
+    customer_data = cursor.fetchone()
+
+    if not customer_data:
+        flash('Customer not found', 'danger')
+        conn.close()
+        return redirect(url_for('customers'))
+
+    if request.method == 'POST':
+        try:
+            name = request.form['name']
+            phone_number = request.form.get('phone_number') or None
+            address = request.form.get('address') or None
+
+            # Ambil data user lama dulu untuk password dan role
+            cursor.execute("SELECT * FROM customers WHERE customer_id=%s", (customer_id,))
+            customer_data = cursor.fetchone()
+            if not customer_data:
+                return jsonify(status="error", message="Pelanggan tidak ditemukan"), 404
+
+            cursor.execute("""
+                UPDATE customers
+                SET name=%s, phone_number=%s, address=%s
+                WHERE customer_id=%s
+            """, (name, phone_number, address, customer_id))
+
+            conn.commit()
+            conn.close()
+
+            return jsonify(status="success", message="Pelanggan berhasil diperbarui")
+        except Exception as e:
+            return jsonify(status="error", message=f"Gagal memperbarui pelanggan: {str(e)}"), 500
+
+
+    conn.close()
+    return render_template('customers/edit_customer.html', user=customer_data)
+
+
 
 
 if __name__ == '__main__':

@@ -11,7 +11,7 @@
 
 
   <div class="mb-4 flex justify-end space-x-2">
-    <a href="{{ url_for('add_user') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md 
+    <a href="{{ url_for('add_customer') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md 
           text-white bg-blue-600 hover:bg-blue-700 focus:outline-none 
           focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 no-print">
       <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -41,9 +41,9 @@
           <td class="px-6 py-3 whitespace-nowrap text-gray-900">{{ user.phone_number or '-' }}</td>
           <td class="px-6 py-3 whitespace-nowrap text-gray-900">{{ user.address or '-' }}</td>
           <td>
-            <a href="">Edit</a>
+            <a href="{{ url_for('edit_customer', customer_id=user.customer_id) }}">Edit</a>
             |
-            <a href="#" class="delete-customer" data-url="">Delete</a>
+            <a href="#" class="delete-customer" data-url="{{ url_for('delete_customer', customer_id=user.customer_id) }}">Delete</a>
           </td>
         </tr>
         {% endfor %}
@@ -78,7 +78,7 @@
       const url = this.getAttribute('data-url');
 
       Swal.fire({
-        title: 'Yakin ingin menghapus user ini?',
+        title: 'Yakin ingin menghapus pelanggan ini?',
         text: "Data yang dihapus tidak bisa dikembalikan!",
         icon: 'warning',
         showCancelButton: true,
@@ -102,12 +102,12 @@
             if (data.status === 'success') {
               Toast.fire({
                 icon: 'success',
-                title: data.message || 'User berhasil dihapus'
+                title: data.message || 'Pelanggan berhasil dihapus'
               }).then(() => location.reload());
             } else {
               Toast.fire({
                 icon: 'error',
-                title: data.message || 'Gagal menghapus user'
+                title: data.message || 'Gagal menghapus pelanggan'
               });
             }
           })
