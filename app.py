@@ -311,22 +311,117 @@ def edit_customer(customer_id):
 
 
 ## MODULE MANAJEMEN PRODUK
-#--- Route: Halaman Pelanggan --- 
-@app.route('/products')
+#--- Route: Halaman Kategori --- 
+@app.route('/categories')
 #@login_required
-def products():
+def categories():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
     cursor.execute("SELECT * FROM categories")
     categories = cursor.fetchall()
 
+    conn.close()
+
+    return render_template('products/category.html', categories=categories, user=current_user)
+
+# --- Route: Tambah category ---
+@app.route('/add_category', methods=['GET', 'POST'])
+#@login_required
+def add_category():
+    if request.method == 'POST':
+        try:
+            name = request.form['name']
+            description = request.form.get('description') or None
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO categories (name, description)
+                VALUES (%s, %s)
+            """, (name, description))
+            conn.commit()
+            conn.close()
+
+            return jsonify(status="success", message="Kategori berhasil ditambahkan")
+        except Exception as e:
+            return jsonify(status="error", message=f"Gagal menambahkan kategori: {str(e)}"), 500
+
+    return render_template('products/add_category.html', user=current_user)
+
+#--- Route: Edit category --- 
+@app.route('/edit_category/<int:category_id>', methods=['GET', 'POST'])
+#@login_required
+def edit_category(category_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Ambil data category yang akan diedit
+    cursor.execute("SELECT * FROM categories WHERE category_id = %s", (category_id,))
+    category_data = cursor.fetchone()
+
+    if not category_data:
+        flash('Category not found', 'danger')
+        conn.close()
+        return redirect(url_for('categories'))
+
+    if request.method == 'POST':
+        try:
+            name = request.form['name']
+            description = request.form.get('description') or None
+
+            # Ambil data category lama
+            cursor.execute("SELECT * FROM categories WHERE category_id=%s", (category_id,))
+            category_data = cursor.fetchone()
+            if not category_data:
+                return jsonify(status="error", message="Category tidak ditemukan"), 404
+
+            cursor.execute("""
+                UPDATE categories
+                SET name=%s, description=%s
+                WHERE category_id=%s
+            """, (name, description, category_id))
+
+            conn.commit()
+            conn.close()
+
+            return jsonify(status="success", message="Kategori berhasil diperbarui")
+        except Exception as e:
+            return jsonify(status="error", message=f"Gagal memperbarui kategori: {str(e)}"), 500
+
+
+    conn.close()
+    return render_template('products/edit_category.html', category=category_data, user=current_user)
+
+#--- Route: Hapus category --- 
+@app.route('/delete_category/<int:category_id>', methods=['POST'])
+#@login_required
+def delete_category(category_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute("DELETE FROM categories WHERE category_id = %s", (category_id,))
+        conn.commit()
+        conn.close()
+        return jsonify(status='success', message='Category deleted successfully')
+    except Exception as e:
+        conn.close()
+        return jsonify(status='error', message=f'Failed to delete category: {str(e)}'), 500
+    
+#--- Route: Halaman produk --- 
+@app.route('/products')
+#@login_required
+def products():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
     cursor.execute("SELECT * FROM products")
     products = cursor.fetchall()
 
     conn.close()
 
-    return render_template('products/product.html', categories=categories, products=products, user=current_user)
+    return render_template('products/product.html', products=products, user=current_user)
 
 if __name__ == '__main__':
     app.run(debug=True)
