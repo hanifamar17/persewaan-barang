@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, render_template, flash
+from flask import Flask, request, redirect, url_for, render_template, flash, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import User
 from db import get_db_connection
@@ -67,7 +67,7 @@ def logout():
 def dashboard():
     return render_template('index.html', user=current_user)
 
-## MODULE ADMI
+## MODULE MANAJEMEN USER
 #--- Route: Halaman user --- 
 @app.route('/user')
 @login_required
@@ -81,7 +81,7 @@ def user():
     users = cursor.fetchall()
     conn.close()
 
-    return render_template('admin/user.html', users=users)
+    return render_template('admin/user.html', users=users, user=current_user)
 
 # --- Route: Tambah User Baru (Hanya untuk admin) ---
 @app.route('/add_user', methods=['GET', 'POST'])
@@ -91,33 +91,36 @@ def add_user():
         return "Access denied", 403
 
     if request.method == 'POST':
-        name = request.form['name']
-        username = request.form['username']
-        password = generate_password_hash(request.form['password'])
-        email = request.form.get('email') or None
-        phone_number = request.form.get('phone_number') or None
-        address = request.form.get('address') or None
-        role = request.form['role']  # admin or customer service
+        try:
+            name = request.form['name']
+            username = request.form['username']
+            password = generate_password_hash(request.form['password'])
+            email = request.form.get('email') or None
+            phone_number = request.form.get('phone_number') or None
+            address = request.form.get('address') or None
+            role = request.form['role']  # admin or customer service
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            INSERT INTO users (name, username, password, email, phone_number, address, role)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """, (name, username, password, email, phone_number, address, role))
-        conn.commit()
-        conn.close()
-        flash('User added successfully', 'success')
-        return redirect(url_for('add_user'))
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                INSERT INTO users (name, username, password, email, phone_number, address, role)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (name, username, password, email, phone_number, address, role))
+            conn.commit()
+            conn.close()
 
-    return render_template('admin/add_user.html')
+            return jsonify(status="success", message="User berhasil ditambahkan")
+        except Exception as e:
+            return jsonify(status="error", message=f"Gagal menambahkan user: {str(e)}"), 500
+
+    return render_template('admin/add_user.html', user=current_user)
 
 #--- Route: Hapus user --- 
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
 @login_required
 def delete_user(user_id):
     if current_user.role not in ['superadmin', 'admin']:
-        return "Access denied", 403
+        return jsonify(status='error', message='Access denied'), 403
 
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -127,16 +130,22 @@ def delete_user(user_id):
     user = cursor.fetchone()
 
     if not user:
-        flash('User not found', 'danger')
-    elif user['role'] == 'superadmin':
-        flash('Cannot delete superadmin', 'warning')
-    else:
+        conn.close()
+        return jsonify(status='error', message='User not found'), 404
+
+    if user['role'] == 'superadmin':
+        conn.close()
+        return jsonify(status='error', message='Cannot delete superadmin'), 403
+
+    try:
         cursor.execute("DELETE FROM users WHERE user_id = %s", (user_id,))
         conn.commit()
-        flash('User deleted successfully', 'success')
+        conn.close()
+        return jsonify(status='success', message='User deleted successfully')
+    except Exception as e:
+        conn.close()
+        return jsonify(status='error', message=f'Failed to delete user: {str(e)}'), 500
 
-    conn.close()
-    return redirect(url_for('user'))
 
 @app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
 @login_required
@@ -157,34 +166,63 @@ def edit_user(user_id):
         return redirect(url_for('user'))
 
     if request.method == 'POST':
-        name = request.form['name']
-        username = request.form['username']
-        email = request.form.get('email') or None
-        phone_number = request.form.get('phone_number') or None
-        address = request.form.get('address') or None
+        try:
+            name = request.form['name']
+            username = request.form['username']
+            new_password = request.form.get('password')  # bisa kosong
 
-        # Role hanya boleh diedit jika user yang diedit bukan superadmin
-        if user_data['role'] != 'superadmin':
-            role = request.form['role']
-        else:
-            role = user_data['role']  # tetap gunakan role lama
+            email = request.form.get('email') or None
+            phone_number = request.form.get('phone_number') or None
+            address = request.form.get('address') or None
 
-        cursor.execute("""
-            UPDATE users
-            SET name=%s, username=%s, email=%s, phone_number=%s, address=%s, role=%s
-            WHERE user_id=%s
-        """, (name, username, email, phone_number, address, role, user_id))
-        conn.commit()
-        conn.close()
+            # Ambil data user lama dulu untuk password dan role
+            cursor.execute("SELECT * FROM users WHERE user_id=%s", (user_id,))
+            user_data = cursor.fetchone()
+            if not user_data:
+                return jsonify(status="error", message="User tidak ditemukan"), 404
 
-        flash('User updated successfully', 'success')
-        return redirect(url_for('user'))
+            # Role hanya boleh diedit jika user yang diedit bukan superadmin
+            if user_data['role'] != 'superadmin':
+                role = request.form['role']
+            else:
+                role = user_data['role']  # tetap gunakan role lama
+
+            if new_password and new_password.strip() != "":
+                # Jika user isi password baru, hash dan update
+                password_hashed = generate_password_hash(new_password)
+            else:
+                # Jika kosong, gunakan password lama dari DB
+                password_hashed = user_data['password']
+
+            cursor.execute("""
+                UPDATE users
+                SET name=%s, username=%s, password=%s, email=%s, phone_number=%s, address=%s, role=%s
+                WHERE user_id=%s
+            """, (name, username, password_hashed, email, phone_number, address, role, user_id))
+
+            conn.commit()
+            conn.close()
+
+            return jsonify(status="success", message="User berhasil diperbarui")
+        except Exception as e:
+            return jsonify(status="error", message=f"Gagal memperbarui user: {str(e)}"), 500
+
 
     conn.close()
     return render_template('admin/edit_user.html', user=user_data)
 
+#--- Route: Halaman Pelanggan --- 
+@app.route('/customers')
+@login_required
+def customers():
 
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM customers")
+    users = cursor.fetchall()
+    conn.close()
 
+    return render_template('customers/customer.html', users=users, user=current_user)
 
 
 if __name__ == '__main__':
