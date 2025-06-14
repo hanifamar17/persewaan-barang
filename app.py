@@ -4,10 +4,14 @@ from models import User
 from db import get_db_connection
 from werkzeug.security import check_password_hash, generate_password_hash
 import os
+from flask_wtf.csrf import CSRFProtect, CSRFError
+
+
 
 app = Flask(__name__)
 secret_key = os.urandom(24)
 app.secret_key = secret_key
+csrf = CSRFProtect(app)
 
 
 login_manager = LoginManager()
@@ -95,9 +99,9 @@ def add_user():
             name = request.form['name']
             username = request.form['username']
             password = generate_password_hash(request.form['password'])
-            email = request.form.get('email') or None
-            phone_number = request.form.get('phone_number') or None
-            address = request.form.get('address') or None
+            email = request.form.get('email', "-")
+            phone_number = request.form.get('phone_number', "-")
+            address = request.form.get('address', "-")
             role = request.form['role']  # admin or customer service
 
             conn = get_db_connection()
@@ -171,9 +175,9 @@ def edit_user(user_id):
             username = request.form['username']
             new_password = request.form.get('password')  # bisa kosong
 
-            email = request.form.get('email') or None
-            phone_number = request.form.get('phone_number') or None
-            address = request.form.get('address') or None
+            email = request.form.get('email', "-")
+            phone_number = request.form.get('phone_number', "-")
+            address = request.form.get('address', "-")
 
             # Ambil data user lama dulu untuk password dan role
             cursor.execute("SELECT * FROM users WHERE user_id=%s", (user_id,))
@@ -230,8 +234,8 @@ def add_customer():
     if request.method == 'POST':
         try:
             name = request.form['name']
-            phone_number = request.form.get('phone_number') or None
-            address = request.form.get('address') or None
+            phone_number = request.form.get('phone_number', "-")
+            address = request.form.get('address', "-")
 
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -283,8 +287,8 @@ def edit_customer(customer_id):
     if request.method == 'POST':
         try:
             name = request.form['name']
-            phone_number = request.form.get('phone_number') or None
-            address = request.form.get('address') or None
+            phone_number = request.form.get('phone_number', "-")
+            address = request.form.get('address', "-")
 
             # Ambil data user lama dulu untuk password dan role
             cursor.execute("SELECT * FROM customers WHERE customer_id=%s", (customer_id,))
@@ -332,7 +336,7 @@ def add_category():
     if request.method == 'POST':
         try:
             name = request.form['name']
-            description = request.form.get('description') or None
+            description = request.form.get('description',"-")
 
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -350,48 +354,35 @@ def add_category():
     return render_template('products/add_category.html', user=current_user)
 
 #--- Route: Edit category --- 
-@app.route('/edit_category/<int:category_id>', methods=['GET', 'POST'])
-#@login_required
+@app.route('/edit_category/<int:category_id>', methods=['POST', 'GET'])
 def edit_category(category_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    # Ambil data category yang akan diedit
     cursor.execute("SELECT * FROM categories WHERE category_id = %s", (category_id,))
     category_data = cursor.fetchone()
 
     if not category_data:
-        flash('Category not found', 'danger')
         conn.close()
-        return redirect(url_for('categories'))
+        return jsonify(status="error", message="Category tidak ditemukan"), 404
 
-    if request.method == 'POST':
-        try:
-            name = request.form['name']
-            description = request.form.get('description') or None
+    try:
+        name = request.form['name']
+        description = request.form.get('description', "-")
 
-            # Ambil data category lama
-            cursor.execute("SELECT * FROM categories WHERE category_id=%s", (category_id,))
-            category_data = cursor.fetchone()
-            if not category_data:
-                return jsonify(status="error", message="Category tidak ditemukan"), 404
+        cursor.execute("""
+            UPDATE categories
+            SET name=%s, description=%s
+            WHERE category_id=%s
+        """, (name, description, category_id))
 
-            cursor.execute("""
-                UPDATE categories
-                SET name=%s, description=%s
-                WHERE category_id=%s
-            """, (name, description, category_id))
+        conn.commit()
+        conn.close()
 
-            conn.commit()
-            conn.close()
-
-            return jsonify(status="success", message="Kategori berhasil diperbarui")
-        except Exception as e:
-            return jsonify(status="error", message=f"Gagal memperbarui kategori: {str(e)}"), 500
-
-
-    conn.close()
-    return render_template('products/edit_category.html', category=category_data, user=current_user)
+        return jsonify(status="success", message="Kategori berhasil diperbarui")
+    except Exception as e:
+        conn.close()
+        return jsonify(status="error", message=f"Gagal memperbarui kategori: {str(e)}"), 500
 
 #--- Route: Hapus category --- 
 @app.route('/delete_category/<int:category_id>', methods=['POST'])
