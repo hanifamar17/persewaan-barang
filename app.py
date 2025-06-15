@@ -18,6 +18,10 @@ login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
 
+## OTHERS
+#--- Format rupiah --- 
+def format_rupiah(amount):
+    return f"Rp{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 # --- Load user by ID for session ---
 @login_manager.user_loader
@@ -407,12 +411,101 @@ def products():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
 
-    cursor.execute("SELECT * FROM products")
+    # Ambil produk dan kategori dengan JOIN
+    cursor.execute("""
+        SELECT p.*, c.name AS category_name
+        FROM products p
+        JOIN categories c ON p.category_id = c.category_id
+    """)
     products = cursor.fetchall()
+
+    cursor.execute("SELECT category_id, name FROM categories")
+    categories = cursor.fetchall()
 
     conn.close()
 
-    return render_template('products/product.html', products=products, user=current_user)
+    # filter format rupiah
+    app.jinja_env.filters['rupiah'] = format_rupiah
+
+    return render_template('products/product.html', products=products, categories=categories, user=current_user)
+
+# --- Route: Tambah product ---
+@app.route('/add_product', methods=['GET', 'POST'])
+def add_product():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    if request.method == 'POST':
+        try:
+            product_id = request.form['product_id']
+            category_id = request.form['category_id']
+            name = request.form['name']
+            qty = int(request.form['qty'])
+            harga_sewa = float(request.form['harga_sewa'])
+            description = request.form.get('description', '-')
+            status = request.form.get('status', 'tersedia')
+
+            cursor.execute("""
+                INSERT INTO products (product_id, category_id, name, qty, harga_sewa, description, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (product_id, category_id, name, qty, harga_sewa, description, status))
+            conn.commit()
+            return jsonify(status="success", message="Produk berhasil ditambahkan")
+        except Exception as e:
+            return jsonify(status="error", message=f"Gagal menambahkan produk: {str(e)}"), 500
+        finally:
+            conn.close()
+
+    # untuk GET request: ambil daftar kategori
+    cursor.execute("SELECT category_id, name FROM categories")
+    categories = cursor.fetchall()
+    conn.close()
+
+    return render_template('products/add_product.html', categories=categories, user=current_user)
+
+#--- Route: Edit product --- 
+@app.route('/edit_product/<int:id>', methods=['POST'])
+def edit_product(id):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        product_id = request.form['product_id']
+        category_id = request.form['category_id']
+        name = request.form['name']
+        qty = int(request.form['qty'])
+        harga_sewa = float(request.form['harga_sewa'])
+        description = request.form.get('description', '-')
+
+        cursor.execute("""
+            UPDATE products
+            SET product_id=%s, category_id=%s, name=%s, qty=%s, harga_sewa=%s, description=%s
+            WHERE id=%s
+        """, (product_id, category_id, name, qty, harga_sewa, description, id))
+
+        conn.commit()
+        return jsonify(status="success", message="Produk berhasil diperbarui")
+    except Exception as e:
+        return jsonify(status="error", message=str(e)), 500
+    finally:
+        conn.close()
+    
+#--- Route: Hapus product --- 
+@app.route('/delete_product/<int:id>', methods=['POST'])
+#@login_required
+def delete_product(id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute("DELETE FROM products WHERE id = %s", (id,))
+        conn.commit()
+        conn.close()
+        return jsonify(status='success', message='Product deleted successfully')
+    except Exception as e:
+        conn.close()
+        return jsonify(status='error', message=f'Failed to delete product: {str(e)}'), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)

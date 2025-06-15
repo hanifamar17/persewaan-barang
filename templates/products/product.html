@@ -9,30 +9,30 @@
     <p class="text-gray-500 text-sm">Menampilkan informasi kategori produk dan produk yang disewakan</p>
   </div>
 
+  <div class="mb-6 border-b border-gray-200">
+    <nav class="flex pb-4" aria-label="Breadcrumb">
+      <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
+        <li class="inline-flex items-center">
+          <a href="{{ url_for('categories') }}"
+            class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+            Kategori Produk
+          </a>
+        </li>
+        <li>
+          <div class="flex items-center">
+            <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
+              fill="none" viewBox="0 0 6 10">
+              <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="m1 9 4-4-4-4" />
+            </svg>
+            <a class="ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2">Produk</a>
+          </div>
+        </li>
+      </ol>
+    </nav>
+  </div>
 
-
-  <nav class="flex" aria-label="Breadcrumb">
-    <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
-      <li class="inline-flex items-center">
-        <a href="{{ url_for('categories') }}"
-          class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
-          Kategori Produk
-        </a>
-      </li>
-      <li>
-        <div class="flex items-center">
-          <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-            fill="none" viewBox="0 0 6 10">
-            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="m1 9 4-4-4-4" />
-          </svg>
-          <a
-            class="ms-1 text-sm font-medium text-gray-700 hover:text-blue-600 md:ms-2">Produk</a>
-        </div>
-      </li>
-    </ol>
-  </nav>
-
+  <!-- Add Product Button
   <div class="mb-4 flex justify-end space-x-2">
     <a href="#" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md 
           text-white bg-blue-600 hover:bg-blue-700 focus:outline-none 
@@ -43,7 +43,122 @@
       </svg>
       Add Product
     </a>
-  </div>
+  </div>-->
+
+  <section id="modal-add-product">
+    <!-- Modal toggle -->
+    <div class="mb-4 flex justify-end space-x-2">
+      <button type="button" data-modal-target="crud-modal" data-modal-toggle="crud-modal" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md 
+      text-white bg-blue-600 hover:bg-blue-700 focus:outline-none 
+      focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 no-print cursor-pointer">
+        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Add Product
+      </button>
+    </div>
+
+
+    <!-- Main modal -->
+    <div id="crud-modal" tabindex="-1" aria-hidden="true"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+      <div class="relative p-4 w-full max-w-xl max-h-full scale-95 transition-transform duration-300 ease-out">
+        <!-- Modal content -->
+        <div class="relative bg-white rounded-lg shadow-sm">
+          <!-- Modal header -->
+          <div class="flex items-center justify-between p-4 md:p-5 rounded-t border-b border-gray-300">
+            <div>
+              <h1 class="font-medium">Tambah Produk</h1>
+              <p class="py-2 text-gray-500 text-sm">Masukkan produk yang disewakan</p>
+            </div>
+            <button type="button"
+              class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+              data-modal-toggle="crud-modal">
+              <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 14 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+              </svg>
+              <span class="sr-only">Close modal</span>
+            </button>
+          </div>
+          <!-- Modal body -->
+          <form id="addProductForm" method="POST" class="p-4 md:p-5">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="grid gap-4 mb-4 grid-cols-2">
+              <!-- Product ID -->
+              <div class="col-span-2 sm:col-span-1">
+                <label for="product_id" class="block mb-2 text-sm font-medium text-gray-900">Product ID</label>
+                <input type="text" name="product_id" id="product_id"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
+                  placeholder="Contoh: P001" required>
+              </div>
+
+              <!-- Kategori -->
+              <div class="col-span-2 sm:col-span-1">
+                <label for="category_id" class="block mb-2 text-sm font-medium text-gray-900">Kategori</label>
+                <select name="category_id" id="category_id"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5" required>
+                  <option value="" disabled selected>Pilih kategori</option>
+                  {% for category in categories %}
+                  <option value="{{ category.category_id }}">{{ category.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Nama Produk -->
+              <div class="col-span-2">
+                <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama Produk</label>
+                <input type="text" name="name" id="name"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
+                  placeholder="Nama produk" required>
+              </div>
+
+              <!-- Jumlah -->
+              <div class="col-span-2 sm:col-span-1">
+                <label for="qty" class="block mb-2 text-sm font-medium text-gray-900">Jumlah (Qty)</label>
+                <input type="number" name="qty" id="qty" min="1"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
+                  placeholder="Jumlah stok" required>
+              </div>
+
+              <!-- Harga Sewa -->
+              <div class="col-span-2 sm:col-span-1">
+                <label for="harga_sewa" class="block mb-2 text-sm font-medium text-gray-900">Harga Sewa</label>
+                <input type="number" name="harga_sewa" id="harga_sewa" min="0"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
+                  placeholder="Harga sewa. Contoh: 50000" required>
+              </div>
+
+              <!-- Deskripsi -->
+              <div class="col-span-2">
+                <label for="description" class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
+                <textarea name="description" id="description" rows="4"
+                  class="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 p-2.5"
+                  placeholder="Deskripsi produk (opsional)"></textarea>
+              </div>
+
+              <!-- Status (default tersedia) -->
+              <input type="hidden" name="status" value="tersedia">
+            </div>
+
+            <button type="submit"
+              class="cursor-pointer text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+              <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20"
+                xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd"
+                  d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+                  clip-rule="evenodd"></path>
+              </svg>
+              Tambah Produk
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <div class="overflow-x-auto">
     <table class="min-w-full divide-y divide-gray-200">
@@ -61,22 +176,129 @@
       <tbody class="bg-white divide-y divide-gray-200">
         {% for product in products %}
         <tr class="odd:bg-white even:bg-gray-50 hover:bg-gray-100 text-sm">
-          <td class="px-6 py-3 whitespace-nowrap text-gray-900">{{ product.product_id }}</td>
-          <td class="px-6 py-3 whitespace-nowrap text-gray-900">{{ product.category_id.name }}</td>
-          <td class="px-6 py-3 whitespace-nowrap text-gray-900">{{ product.name }}</td>
-          <td class="px-6 py-3 whitespace-nowrap text-gray-900">{{ product.qty }}</td>
-          <td class="px-6 py-3 whitespace-nowrap text-gray-900">{{ product.harga_sewa }}</td>
-          <td class="px-6 py-3 whitespace-nowrap text-gray-900">{{ product.description }}</td>
+          <td class="px-6 py-3 whitespace-nowrap">{{ product.product_id }}</td>
+          <td class="px-6 py-3 whitespace-nowrap">{{ product.category_name }}</td>
+          <td class="px-6 py-3 whitespace-nowrap">{{ product.name }}</td>
+          <td class="px-6 py-3 whitespace-nowrap">{{ product.qty }}</td>
+          <td class="px-6 py-3 whitespace-nowrap">{{ product.harga_sewa|rupiah }}</td>
+          <td class="px-6 py-3 whitespace-nowrap">{{ product.description }}</td>
           <td>
-            <a href="#">Edit</a>
+            <button class="edit-btn bg-blue-500 text-white px-3 py-1 rounded cursor-pointer" data-id="{{ product.id }}"
+              data-product_id="{{ product.product_id }}" data-category="{{product.category_id}}"
+              data-name="{{ product.name }}" data-qty="{{ product.qty }}" data-harga_sewa="{{ product.harga_sewa }}"
+              data-description="{{ product.description }}" data-modal-target="edit-product-modal"
+              data-modal-toggle="edit-product-modal">
+              Edit
+            </button>
             |
-            <a href="#" class="delete-category" data-url="#">Delete</a>
+            <a href="#" class="delete-product"
+              data-url="{{ url_for('delete_product', id=product.id) }}">Delete</a>
           </td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+
+  <section id="modal-edit-product">
+    <!-- Main modal -->
+    <div id="edit-product-modal" tabindex="-1" aria-hidden="true"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-sm transition-opacity duration-300 opacity-0">
+      <div class="relative p-4 w-full max-w-xl max-h-full scale-95 transition-transform duration-300 ease-out">
+        <!-- Modal content -->
+        <div class="relative bg-white rounded-lg shadow-sm">
+          <!-- Modal header -->
+          <div class="flex items-center justify-between p-4 md:p-5 rounded-t border-b border-gray-300">
+            <div>
+              <h1 class="font-medium">Perbarui Produk</h1>
+              <p class="py-2 text-gray-500 text-sm">Masukkan produk yang disewakan</p>
+            </div>
+            <button type="button"
+              class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center"
+              data-modal-toggle="crud-modal">
+              <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none"
+                viewBox="0 0 14 14">
+                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
+              </svg>
+              <span class="sr-only">Close modal</span>
+            </button>
+          </div>
+          <!-- Modal body -->
+          <form id="editProductForm" method="POST" class="p-4 md:p-5">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" id="editId" name="id">
+            <div class="grid gap-4 mb-4 grid-cols-2">
+              <!-- Product ID -->
+              <div class="col-span-2 sm:col-span-1">
+                <label for="product_id" class="block mb-2 text-sm font-medium text-gray-900">Product ID</label>
+                <input type="text" name="product_id" id="editProductId"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
+                  placeholder="Contoh: P001" required>
+              </div>
+
+              <!-- Kategori -->
+              <div class="col-span-2 sm:col-span-1">
+                <label for="category_id" class="block mb-2 text-sm font-medium text-gray-900">Kategori</label>
+                <select name="category_id" id="editCategory"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5" required>
+                  <option value="" disabled selected>Pilih kategori</option>
+                  {% for category in categories %}
+                  <option value="{{ category.category_id }}">{{ category.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+
+              <!-- Nama Produk -->
+              <div class="col-span-2">
+                <label for="name" class="block mb-2 text-sm font-medium text-gray-900">Nama Produk</label>
+                <input type="text" name="name" id="editName"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
+                  placeholder="Nama produk" required>
+              </div>
+
+              <!-- Jumlah -->
+              <div class="col-span-2 sm:col-span-1">
+                <label for="qty" class="block mb-2 text-sm font-medium text-gray-900">Jumlah (Qty)</label>
+                <input type="number" name="qty" id="editQty" min="1"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
+                  placeholder="Jumlah stok" required>
+              </div>
+
+              <!-- Harga Sewa -->
+              <div class="col-span-2 sm:col-span-1">
+                <label for="harga_sewa" class="block mb-2 text-sm font-medium text-gray-900">Harga Sewa</label>
+                <input type="number" name="harga_sewa" id="editHargaSewa" min="0"
+                  class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5"
+                  placeholder="Harga sewa. Contoh: 50000" required>
+              </div>
+
+              <!-- Deskripsi -->
+              <div class="col-span-2">
+                <label for="description" class="block mb-2 text-sm font-medium text-gray-900">Deskripsi</label>
+                <textarea name="description" id="editDescription" rows="4"
+                  class="block w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 p-2.5"
+                  placeholder="Deskripsi produk (opsional)"></textarea>
+              </div>
+
+              <!-- Status (default tersedia) -->
+              <input type="hidden" name="status" value="tersedia">
+            </div>
+
+            <button type="submit"
+              class="cursor-pointer text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="size-6 mr-2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                  d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+              </svg>
+              Perbarui Produk
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
 
   <!-- Back Button -->
   <a href="{{ url_for('dashboard') }}" class="group flex items-center text-indigo-600 font-medium w-fit pt-8">
@@ -85,27 +307,239 @@
   </a>
 </section>
 
+<!--Swal mixin-->
 <script>
+  // Mixin untuk toast notifikasi
   const Toast = Swal.mixin({
     toast: true,
-    position: 'top-end',
+    position: "top-end",
     showConfirmButton: false,
     timer: 3000,
     timerProgressBar: true,
     didOpen: (toast) => {
-      toast.onmouseenter = Swal.stopTimer
-      toast.onmouseleave = Swal.resumeTimer
+      toast.onmouseenter = Swal.stopTimer;
+      toast.onmouseleave = Swal.resumeTimer;
     }
   });
 
-  document.querySelectorAll('.delete-category').forEach(el => {
+  // Mixin untuk dialog penting
+  const QuickAlert = Swal.mixin({
+    confirmButtonColor: '#4F46E5',
+    background: '#fff',
+    confirmButtonText: 'Oke!',
+    customClass: {
+      title: 'text-lg font-medium'
+    }
+  });
+</script>
+
+<!--Modal add customer-->
+<script>
+  const modal = document.getElementById('crud-modal');
+  const openModalButtons = document.querySelectorAll('[data-modal-toggle="crud-modal"]');
+
+  function openModal() {
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      modal.classList.remove('opacity-0');
+      modal.querySelector('div.w-full').classList.remove('scale-95');
+    }, 10);
+  }
+
+  function closeModal() {
+    modal.classList.add('opacity-0');
+    modal.querySelector('div.w-full').classList.add('scale-95');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+    }, 300); // Harus sama dengan duration-300
+  }
+
+  // Buka modal saat tombol open ditekan
+  openModalButtons.forEach(btn => {
+    btn.addEventListener('click', openModal);
+  });
+
+  // Hanya tutup modal jika klik tombol dengan atribut [data-modal-toggle="crud-modal"]
+  modal.querySelectorAll('[data-modal-toggle="crud-modal"]').forEach(btn => {
+    btn.addEventListener('click', closeModal);
+  });
+</script>
+
+<!-- Notifikasi tambah produk -->
+<script>
+  const addUserForm = document.querySelector('#addProductForm');
+  if (addProductForm) {
+    addProductForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const formData = new FormData(this);
+
+      fetch('/add_product', {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'
+        }
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            Toast.fire({
+              icon: 'success',
+              title: data.message
+            }).then(() => {
+              location.reload(); // Optional: Reload untuk reset form
+            });
+          } else {
+            Toast.fire({
+              icon: 'error',
+              title: data.message || 'Gagal menambahkan produk'
+            });
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          Toast.fire({
+            icon: 'error',
+            title: 'Terjadi kesalahan pada server'
+          });
+        });
+    });
+  }
+</script>
+
+<!-- Modal edit category -->
+<script>
+  // Buka modal dan isi field saat tombol edit diklik
+  document.querySelectorAll('.edit-btn').forEach(button => {
+    button.addEventListener('click', () => {
+      const id = button.dataset.id;
+      const productId = button.dataset.product_id;
+      const category = button.dataset.category;
+      const name = button.dataset.name;
+      const qty = button.dataset.qty;
+      const hargaSewa = button.dataset.harga_sewa;
+      const description = button.dataset.description;
+
+      // Isi form
+      document.getElementById('editId').value = id;
+      document.getElementById('editProductId').value = productId;
+      document.getElementById('editCategory').value = category;
+      document.getElementById('editName').value = name;
+      document.getElementById('editQty').value = qty;
+      document.getElementById('editHargaSewa').value = hargaSewa;
+      document.getElementById('editDescription').value = description;
+
+      // Tampilkan modal (jika pakai Flowbite misalnya)
+      const modal = document.getElementById('edit-product-modal');
+      if (modal) {
+        modal.classList.remove('hidden');
+      }
+    });
+  });
+
+  // AJAX Submit
+  const form = document.getElementById('editProductForm');
+  if (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const id = document.getElementById('editId').value;
+      // Validasi ID sebelum submit
+      if (!id) {
+        QuickAlert.fire({
+          icon: "error",
+          title: "Error!",
+          text: "ID produk tidak ditemukan"
+        });
+        return;
+      }
+
+      const formData = new FormData(form);
+      //console.log("Submit ke: /edit_product/" + id);
+
+      fetch(`/edit_product/${id}`, {
+        method: 'POST',
+        body: formData
+      })
+        .then(res => {
+          if (!res.ok) {
+            return res.text().then(html => {
+              throw new Error("Server error:\n" + html);
+            });
+          }
+          return res.json();
+        })
+        .then(data => {
+          if (data.status === "success") {
+            Toast.fire({
+              icon: "success",
+              title: "Produk berhasil diperbarui"
+            }).then(() => {
+              window.location.reload(); // Reload setelah toast selesai
+            });
+          } else {
+            QuickAlert.fire({
+              icon: "error",
+              title: "Gagal!",
+              text: data.message || "Produk gagal diperbarui"
+            });
+          }
+        })
+        .catch(error => {
+          QuickAlert.fire({
+            icon: "error",
+            title: "Terjadi kesalahan",
+            text: error.message
+          });
+          //console.error(error);
+        });
+    });
+  }
+
+  // Fungsi untuk buka modal
+  function openModal(modal) {
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+      modal.classList.remove('opacity-0');
+    }, 10);
+  }
+
+  // Fungsi untuk tutup modal
+  function closeModal(modal) {
+    modal.classList.add('opacity-0');
+    setTimeout(() => {
+      modal.classList.add('hidden');
+    }, 300);
+  }
+
+  // Jalankan handler global untuk tombol dengan data-modal-toggle
+  document.querySelectorAll('[data-modal-toggle]').forEach(trigger => {
+    const targetId = trigger.getAttribute('data-modal-toggle');
+    const modal = document.getElementById(targetId);
+
+    if (!modal) return;
+
+    trigger.addEventListener('click', () => openModal(modal));
+
+    // Tutup modal via tombol close di dalam modal
+    modal.querySelectorAll(`[data-modal-toggle="${targetId}"]`).forEach(btn => {
+      btn.addEventListener('click', () => closeModal(modal));
+    });
+  });
+</script>
+
+<!--Fungsi Delete-->
+<script>
+  document.querySelectorAll('.delete-product').forEach(el => {
     el.addEventListener('click', function (e) {
       e.preventDefault(); // cegah navigasi default
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
       const url = this.getAttribute('data-url');
 
       Swal.fire({
-        title: 'Yakin ingin menghapus kategori ini?',
+        title: 'Yakin ingin menghapus produk ini?',
         text: "Data yang dihapus tidak bisa dikembalikan!",
         icon: 'warning',
         showCancelButton: true,
@@ -120,7 +554,7 @@
             headers: {
               'X-Requested-With': 'XMLHttpRequest',
               'Content-Type': 'application/x-www-form-urlencoded',
-              // Jika menggunakan CSRF, tambahkan token header di sini
+              'X-CSRFToken': csrfToken
             },
             body: '' // kosong karena tidak ada form data
           })
@@ -129,12 +563,12 @@
               if (data.status === 'success') {
                 Toast.fire({
                   icon: 'success',
-                  title: data.message || 'Kategori berhasil dihapus'
+                  title: data.message || 'Produk berhasil dihapus'
                 }).then(() => location.reload());
               } else {
                 Toast.fire({
                   icon: 'error',
-                  title: data.message || 'Gagal menghapus kategori'
+                  title: data.message || 'Gagal menghapus produk'
                 });
               }
             })
@@ -149,4 +583,5 @@
     });
   });
 </script>
+
 {% endblock %}
