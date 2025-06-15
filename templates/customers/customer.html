@@ -4,9 +4,25 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <section class="w-full p-8 bg-white rounded shadow">
   <!-- Header -->
-  <div class="text-center md:text-left space-y-2 mb-8">
-    <h1 class="text-xl font-medium text-gray-800">Data Pelanggan</h1>
-    <p class="text-gray-500 text-sm">Lihat dan tambahkan pelanggan</p>
+  <div class="flex items-center justify-between mb-6">
+    <div class="text-center md:text-left space-y-2 mb-8">
+      <h1 class="text-xl font-medium text-gray-800">Data Pelanggan</h1>
+      <p class="text-gray-500 text-sm">Lihat dan tambahkan pelanggan</p>
+    </div>
+
+    <!-- Modal toggle -->
+    <div class="mb-4 flex justify-end space-x-2">
+      <button type="button" data-modal-target="crud-modal" data-modal-toggle="crud-modal" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md 
+      text-white bg-blue-600 hover:bg-blue-700 focus:outline-none 
+      focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 no-print cursor-pointer">
+        <svg class="me-1 -ms-1 w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd"
+            d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"
+            clip-rule="evenodd"></path>
+        </svg>
+        Tambah Pelanggan
+      </button>
+    </div>
   </div>
 
   <!--
@@ -23,20 +39,6 @@
   </div>-->
 
   <section id="modal-add-customer">
-    <!-- Modal toggle -->
-    <div class="mb-4 flex justify-end space-x-2">
-      <button type="button" data-modal-target="crud-modal" data-modal-toggle="crud-modal" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md 
-      text-white bg-blue-600 hover:bg-blue-700 focus:outline-none 
-      focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 no-print cursor-pointer">
-        <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        Tambah Pelanggan
-      </button>
-    </div>
-
-
     <!-- Main modal -->
     <div id="crud-modal" tabindex="-1" aria-hidden="true"
       class="fixed inset-0 z-50 hidden items-center justify-center bg-black/30 backdrop-blur-sm transition-opacity duration-300 opacity-0">
@@ -102,34 +104,49 @@
     </div>
   </section>
 
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
+  <div class="overflow-x-auto w-full">
+    <table id="customers-table" class="w-full text-sm divide-y divide-gray-200">
       <thead>
         <tr class="bg-gray-50">
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+          <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+          <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nama</th>
+          <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hp/Telp</th>
+          <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Alamat</th>
+          <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
         </tr>
       </thead>
       <tbody class="bg-white divide-y divide-gray-200">
         {% for customer in users %}
         <tr class="odd:bg-white even:bg-gray-50 hover:bg-gray-100 text-sm">
-          <td class="px-6 py-3 whitespace-nowrap text-gray-900">{{ customer.customer_id }}</td>
-          <td class="px-6 py-3 whitespace-nowrap text-gray-900">{{ customer.name }}</td>
-          <td class="px-6 py-3 whitespace-nowrap text-gray-900">{{ customer.phone_number or '-' }}</td>
-          <td class="px-6 py-3 whitespace-nowrap text-gray-900">{{ customer.address or '-' }}</td>
-          <td>
-            <button class="edit-btn bg-blue-500 text-white px-3 py-1 rounded cursor-pointer"
-              data-id="{{ customer.customer_id }}" data-name="{{ customer.name }}"
-              data-phone="{{ customer.phone_number }}" data-address="{{ customer.address }}"
-              data-modal-target="edit-modal" data-modal-toggle="edit-modal">
-              Edit
-            </button>
-            |
-            <a href="#" class="delete-customer"
-              data-url="{{ url_for('delete_customer', customer_id=customer.customer_id) }}">Delete</a>
+          <td class="px-3 py-2 whitespace-nowrap text-gray-900"></td>
+          <td class="px-3 py-2 whitespace-nowrap text-gray-900">{{ customer.name }}</td>
+          <td class="px-3 py-2 whitespace-nowrap text-gray-900">{{ customer.phone_number or '-' }}</td>
+          <td class="px-3 py-3 whitespace-normal break-words text-gray-900 max-w-xs text-justify">{{ customer.address or '-' }}</td>
+          <td class="px-3 py-2">
+            <div class="flex items-center space-x-2">
+              <!-- Edit Button - Text Only -->
+              <button class="edit-btn cursor-pointer
+                   hover:text-blue-800 active:text-blue-900
+                   font-medium text-sm
+                   transition-all duration-200 ease-in-out
+                   hover:underline hover:underline-offset-2" data-id="{{ customer.customer_id }}"
+                data-name="{{ customer.name }}" data-phone="{{ customer.phone_number }}"
+                data-address="{{ customer.address }}" data-modal-target="edit-modal" data-modal-toggle="edit-modal">
+                Edit
+              </button>
+              <!-- Separator -->
+              <span class="text-gray-300">|</span>
+              <!-- Delete Button - Text Only -->
+              <button class="delete-customer cursor-pointer
+                   text-red-600 hover:text-red-800 active:text-red-900
+                   font-medium text-sm
+                   py-1
+                   transition-all duration-200 ease-in-out
+                   hover:underline hover:underline-offset-2"
+                data-url="{{ url_for('delete_customer', customer_id=customer.customer_id) }}">
+                Delete
+              </button>
+            </div>
           </td>
         </tr>
         {% endfor %}
@@ -209,6 +226,58 @@
     </div>
   </div>
 </section>
+
+<!--datatables-->
+<script>
+  $(document).ready(function () {
+    $('#customers-table').DataTable({
+      responsive: true,
+      pageLength: 10,
+      lengthMenu: [5, 10, 25, 50],
+      language: {
+        search: "Cari:",
+        lengthMenu: "Tampilkan _MENU_ data",
+        info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+        paginate: {
+          next: "Berikutnya",
+          previous: "Sebelumnya"
+        }
+      },
+      columnDefs: [
+        {
+          targets: 0,
+          searchable: false,
+          orderable: false,
+          render: function (data, type, row, meta) {
+            return meta.row + 1;
+          }
+        }
+      ],
+      // Atur layout DOM untuk posisi elemen
+      dom: '<"flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4"<"mb-2 sm:mb-0"l><"mb-2 sm:mb-0 flex items-center justify-end gap-2"f<"tambah-btn">>>rt<"flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4"<"mb-2 sm:mb-0"i><"mb-2 sm:mb-0"p>>',
+
+      initComplete: function () {
+
+        // Styling untuk controls atas
+        $('.dataTables_length label').addClass('text-sm font-medium text-gray-700');
+        $('.dataTables_filter label').addClass('text-sm font-medium text-gray-700');
+        $('.dataTables_length select').addClass('ml-2 px-2 py-1 border border-gray-300 rounded text-sm');
+        $('.dataTables_filter input').addClass('ml-2 px-3 py-2 border border-gray-300 rounded text-sm');
+
+        // Styling untuk info dan pagination di bawah
+        $('.dataTables_info').addClass('text-sm text-gray-600');
+        $('.dataTables_paginate').addClass('flex text-sm');
+      },
+
+      drawCallback: function () {
+        // Style pagination buttons setiap kali table di-draw
+        $('.dataTables_paginate .paginate_button').addClass('mx-1 px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50');
+        $('.dataTables_paginate .paginate_button.current').addClass('bg-blue-500 text-white border-blue-500');
+        $('.dataTables_paginate .paginate_button.disabled').addClass('text-gray-400 cursor-not-allowed');
+      }
+    });
+  });
+</script>
 
 <!--Swal mixin-->
 <script>
