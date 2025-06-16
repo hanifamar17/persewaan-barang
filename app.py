@@ -4,7 +4,9 @@ from models import User
 from db import get_db_connection
 from werkzeug.security import check_password_hash, generate_password_hash
 import os
+import uuid
 from flask_wtf.csrf import CSRFProtect, CSRFError
+from datetime import datetime, date
 
 
 
@@ -505,6 +507,158 @@ def delete_product(id):
     except Exception as e:
         conn.close()
         return jsonify(status='error', message=f'Failed to delete product: {str(e)}'), 500
+
+
+## MODULE TRANSAKSI
+#--- Route: Halaman transaksi --- 
+@app.route('/sewa')
+#@login_required
+def sewa():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+    cursor.execute("SELECT * FROM products")
+    products = cursor.fetchall()
+
+    cursor.execute("SELECT * FROM customers")
+    customers = cursor.fetchall()
+
+    conn.close()
+
+    # Generate nomor nota otomatis
+    no_nota = f"NOTA-{uuid.uuid4().hex[:8].upper()}"
+
+    return render_template('transactions/transaction.html', 
+                           products=products, customers=customers, user=current_user,
+                            no_nota=no_nota,
+                           today=date.today())
+
+#--- Route: cari ketersediaan produk ---
+@app.route('/search-products', methods=['POST'])
+def search_products():
+    data = request.get_json()
+    search_term = data.get('search_term', '')
+    tanggal_sewa = data.get('tanggal_sewa')
+    tanggal_kembali = data.get('tanggal_kembali')
+    
+    if not tanggal_sewa or not tanggal_kembali:
+        return jsonify({'error': 'Tanggal sewa dan kembali harus diisi'}), 400
+    
+    # Validasi tanggal
+    try:
+        sewa_date = datetime.strptime(tanggal_sewa, '%Y-%m-%d').date()
+        kembali_date = datetime.strptime(tanggal_kembali, '%Y-%m-%d').date()
+        
+        if sewa_date >= kembali_date:
+            return jsonify({'error': 'Tanggal kembali harus setelah tanggal sewa'}), 400
+            
+    except ValueError:
+        return jsonify({'error': 'Format tanggal tidak valid'}), 400
+    
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = """
+        SELECT 
+            p.product_id, 
+            p.name, 
+            p.harga_sewa, 
+            p.qty,
+            COALESCE(SUM(
+                CASE 
+                    WHEN t.status_pengembalian = 'belum' 
+                    AND t.tanggal_sewa < %s 
+                    AND t.tanggal_kembali > %s 
+                    THEN td.qty 
+                    ELSE 0 
+                END
+            ), 0) as qty_disewa
+        FROM products p
+        LEFT JOIN transaction_details td ON p.product_id = td.product_id
+        LEFT JOIN transactions t ON td.transaction_id = t.transaction_id
+        WHERE (p.name LIKE %s OR p.product_id LIKE %s)
+        GROUP BY p.product_id, p.name, p.harga_sewa, p.qty
+        HAVING (p.qty - qty_disewa) > 0
+        ORDER BY p.name
+    """
+
+    search_pattern = f'%{search_term}%'
+    cursor.execute(query, (tanggal_kembali, tanggal_sewa, search_pattern, search_pattern))
+
+    products = cursor.fetchall()
+
+    # Hitung stok tersedia
+    for product in products:
+        product['stok_tersedia'] = product['qty'] - product['qty_disewa']
+
+    cursor.close()
+    conn.close()
+
+    
+    return jsonify(products)
+
+#--- Route: Simpan transaksi ---
+@app.route('/save_transaction', methods=['POST'])
+def save_transaction():
+    data = request.get_json()
+    
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Generate nota number
+        today = datetime.now().strftime("%Y%m%d")
+        cursor.execute("SELECT COUNT(*) FROM transactions WHERE DATE(tanggal_nota) = CURDATE()")
+        daily_count = cursor.fetchone()[0] + 1
+        no_nota = f"RNT{today}{daily_count:03d}"
+        
+        # Insert transaction
+        transaction_query = """
+            INSERT INTO transactions 
+            (user_id, customer_id, no_nota, tanggal_nota, tanggal_sewa, tanggal_kembali, 
+             status_pembayaran, status_pengembalian, total)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        
+        cursor.execute(transaction_query, (
+            1,  # Default user_id
+            1,  # Default customer_id
+            no_nota,
+            datetime.now().date(),
+            data['tanggal_sewa'],
+            data['tanggal_kembali'],
+            data['status_pembayaran'],
+            'belum',
+            data['total']
+        ))
+        
+        transaction_id = cursor.lastrowid
+        
+        # Insert transaction details
+        detail_query = """
+            INSERT INTO transaction_details (transaction_id, product_id, qty, harga_sewa)
+            VALUES (%s, %s, %s, %s)
+        """
+        
+        for item in data['items']:
+            cursor.execute(detail_query, (
+                transaction_id,
+                item['product_id'],
+                item['qty'],
+                item['harga_sewa']
+            ))
+        
+        conn.commit()
+        cursor.close()
+        conn.close()
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Transaksi berhasil disimpan',
+            'no_nota': no_nota
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 if __name__ == '__main__':

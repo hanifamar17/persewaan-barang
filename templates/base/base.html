@@ -148,6 +148,22 @@
                     </span>
                 </a>
 
+                <a href="/sewa" class="flex items-center gap-x-3 p-2 rounded-lg hover:bg-gray-100 
+                        transition-all duration-200 group">
+                    <div class="flex items-center justify-center w-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2"
+                            stroke="currentColor" class="h-6 w-6 text-gray-500">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M6.75 2.994v2.25m10.5-2.25v2.25m-14.252 13.5V7.491a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v11.251m-18 0a2.25 2.25 0 0 0 2.25 2.25h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5a2.25 2.25 0 0 1 2.25-2.25h13.5a2.25 2.25 0 0 1 2.25 2.25v7.5m-6.75-6h2.25m-9 2.25h4.5m.002-2.25h.005v.006H12v-.006Zm-.001 4.5h.006v.006h-.006v-.005Zm-2.25.001h.005v.006H9.75v-.006Zm-2.25 0h.005v.005h-.006v-.005Zm6.75-2.247h.005v.005h-.005v-.005Zm0 2.247h.006v.006h-.006v-.006Zm2.25-2.248h.006V15H16.5v-.005Z" />
+                        </svg>
+                    </div>
+                    <span class="whitespace-nowrap text-gray-700
+                    transition-all duration-300 
+                    overflow-hidden">
+                        Transaksi Sewa
+                    </span>
+                </a>
+
                 <!-- Divider before Logout -->
                 <div class="border-t border-gray-200 my-2"></div>
 
@@ -178,7 +194,7 @@
                    md:pl-16" :class="open ? 'md:pl-48' : 'md:pl-16'">
 
             <div class="container mx-auto py-4 w-full px-8">
-                <div class="flex md:flex-col xl:flex-row-reverse w-full gap-4">
+                <div class="flex md:flex-col w-full gap-4">
                     {% block content %} <!-- Konten di sini --> {% endblock %}
                 </div>
             </div>

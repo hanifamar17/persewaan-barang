@@ -1,0 +1,411 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+    .card-hover {
+        transition: all 0.3s ease;
+    }
+
+    .card-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+
+    .fade-in {
+        animation: fadeIn 0.5s ease-in;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .search-animation {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+    }
+</style>
+<section class="w-full p-8 bg-white rounded shadow">
+    <div class="text-center md:text-left space-y-2 mb-8">
+        <h1 class="text-xl font-semibold text-gray-800">Transaksi Sewa</h1>
+        <p class="text-gray-600 text-sm">Cari produk dan masukkan ke list sewa</p>
+    </div>
+
+    <!-- Pencarian Produk -->
+    <section class="mb-8">
+            <div class="grid lg:grid-cols-2 gap-8">
+                <!-- Search Form Section -->
+                <div class="bg-white rounded shadow p-6">
+                    <div class="flex items-center mb-6">
+                        <div class="bg-blue-100 p-3 rounded-lg mr-4">
+                            <i class="fas fa-search text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-gray-900">Pencarian Produk</h2>
+                            <p class="text-sm text-gray-600">Masukkan kriteria pencarian Anda</p>
+                        </div>
+                    </div>
+
+                    <form class="space-y-6">
+                        <!-- Date Range -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    <i class="fas fa-calendar-alt mr-2 text-gray-400"></i>
+                                    Tanggal Sewa
+                                </label>
+                                <input type="date" id="tanggalSewa"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="block text-sm font-medium text-gray-700">
+                                    <i class="fas fa-calendar-check mr-2 text-gray-400"></i>
+                                    Tanggal Kembali
+                                </label>
+                                <input type="date" id="tanggalKembali"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                            </div>
+                        </div>
+
+                        <!-- Product Search -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-medium text-gray-700">
+                                <i class="fas fa-box mr-2 text-gray-400"></i>
+                                Nama/Kode Produk
+                            </label>
+                            <div class="relative">
+                                <input type="text" id="searchInput" placeholder="Masukkan nama atau kode produk..."
+                                    class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                                <button type="button" onclick="searchProducts()"
+                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Search Button -->
+                        <button type="button" onclick="searchProducts()"
+                            class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium">
+                            <i class="fas fa-search mr-2"></i>
+                            Cari Produk
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Results Section -->
+                <div class="bg-white rounded shadow p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center">
+                            <div class="bg-green-100 p-3 rounded-lg mr-4">
+                                <i class="fas fa-list text-green-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-semibold text-gray-900">Hasil Pencarian</h2>
+                                <p class="text-sm text-gray-600">Produk yang ditemukan</p>
+                            </div>
+                        </div>
+                        <div id="resultCount"
+                            class="hidden bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+                            0 produk
+                        </div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="loading" class="hidden text-center py-12">
+                        <div
+                            class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent">
+                        </div>
+                        <p class="mt-4 text-gray-600 font-medium">Mencari produk...</p>
+                        <p class="text-sm text-gray-500">Mohon tunggu sebentar</p>
+                    </div>
+
+                    <!-- Results Container -->
+                    <div id="results" class="hidden space-y-4 max-h-96 overflow-y-auto">
+                        <div id="productList"></div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="noResults" class="hidden text-center py-12">
+                        <div class="bg-gray-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-search text-gray-400 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-gray-900 mb-2">Produk Tidak Ditemukan</h3>
+                        <p class="text-gray-500 text-sm">Coba ubah kata kunci pencarian atau periksa ejaan</p>
+                    </div>
+
+                    <!-- Error State -->
+                    <div id="errorMessage" class="hidden bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div class="flex items-center">
+                            <div class="bg-red-100 rounded-full p-2 mr-3">
+                                <i class="fas fa-exclamation-triangle text-red-600"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-red-800 font-medium">Terjadi Kesalahan</h4>
+                                <p id="errorText" class="text-red-700 text-sm mt-1"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Template -->
+            <div id="product-template" class="hidden">
+                <div class="product-card bg-white rounded-lg border border-gray-200 card-hover overflow-hidden">
+                    <div class="p-4">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex-1">
+                                <h3 class="font-semibold text-gray-900 nama-produk mb-1"></h3>
+                                <p class="text-sm text-gray-600 kode-produk"></p>
+                            </div>
+                            <div class="status ml-4"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="text-gray-600 mb-1">Harga Sewa</p>
+                                <p class="font-semibold text-gray-900 harga-sewa"></p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <p class="text-gray-600 mb-1">Stok Tersedia</p>
+                                <p class="font-semibold text-gray-900 stok-tersedia"></p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <button
+                                class="add-btn w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium">
+                                <i class="fas fa-plus mr-2"></i>
+                                Tambah ke Keranjang
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </section>
+</section>
+
+<section class="w-full p-8 bg-white rounded shadow">
+    <!-- List Sewa -->
+    <section class="mb-8">
+        <h2 class="text-lg font-semibold mb-4 text-gray-800">Daftar Produk Disewa</h2>
+        <table class="w-full text-sm divide-y divide-gray-200">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk
+                    </th>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga
+                        Sewa</th>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal
+                    </th>
+                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+                </tr>
+            </thead>
+            <tbody id="sewaList">
+                <tr class="odd:bg-white even:bg-gray-50 hover:bg-gray-100 text-sm">
+                </tr>
+            </tbody>
+        </table>
+    </section>
+</section>
+
+<!--Cek ketersediaan produk-->
+<script>
+    // Load produk dengan tanggal default saat halaman pertama kali dibuka
+    window.onload = function () {
+        setDefaultDates();
+    };
+
+    // Set tanggal default
+    function setDefaultDates() {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        document.getElementById('tanggalSewa').value = today.toISOString().split('T')[0];
+        document.getElementById('tanggalKembali').value = tomorrow.toISOString().split('T')[0];
+    }
+
+    // Fungsi untuk mencari produk
+    async function searchProducts() {
+        const searchTerm = document.getElementById('searchInput').value;
+        const tanggalSewa = document.getElementById('tanggalSewa').value;
+        const tanggalKembali = document.getElementById('tanggalKembali').value;
+
+        // Validasi tanggal
+        if (!tanggalSewa || !tanggalKembali) {
+            showError('Tanggal sewa dan kembali harus diisi');
+            return;
+        }
+
+        if (new Date(tanggalSewa) >= new Date(tanggalKembali)) {
+            showError('Tanggal kembali harus setelah tanggal sewa');
+            return;
+        }
+
+        const loading = document.getElementById('loading');
+        const results = document.getElementById('results');
+        const noResults = document.getElementById('noResults');
+
+        // Reset tampilan
+        hideAllSections();
+        loading.classList.remove('hidden');
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const response = await fetch('/search-products', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({
+                    search_term: searchTerm,
+                    tanggal_sewa: tanggalSewa,
+                    tanggal_kembali: tanggalKembali
+                })
+            });
+
+            const data = await response.json();
+            loading.classList.add('hidden');
+
+            if (response.ok) {
+                if (data.length > 0) {
+                    displayProducts(data);
+                    results.classList.remove('hidden');
+                } else {
+                    noResults.classList.remove('hidden');
+                }
+            } else {
+                showError(data.error || 'Terjadi kesalahan saat mencari produk');
+            }
+        } catch (error) {
+            loading.classList.add('hidden');
+            showError('Gagal terhubung ke server');
+            console.error('Error:', error);
+        }
+    }
+
+
+    // Fungsi untuk menampilkan produk
+    let displayedProducts = [];
+
+    function displayProducts(products) {
+        const container = document.getElementById('productList');
+        const template = document.getElementById('product-template').firstElementChild;
+        container.innerHTML = '';
+        displayedProducts = products;
+
+        products.forEach((product, index) => {
+            const clone = template.cloneNode(true);
+            clone.classList.add('fade-in');
+
+            // Fill elements
+            clone.querySelector('.kode-produk').textContent = `Kode: ${product.product_id}`;
+            clone.querySelector('.nama-produk').textContent = product.name;
+            clone.querySelector('.harga-sewa').textContent = formatCurrency(product.harga_sewa);
+            clone.querySelector('.stok-tersedia').textContent = `${product.stok_tersedia} / ${product.qty}`;
+
+            // Status
+            const statusEl = clone.querySelector('.status');
+            if (product.stok_tersedia > 0) {
+                statusEl.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <i class="fas fa-check-circle mr-1"></i>Tersedia
+                    </span>`;
+            } else {
+                statusEl.innerHTML = `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        <i class="fas fa-times-circle mr-1"></i>Habis
+                    </span>`;
+                const addBtn = clone.querySelector('.add-btn');
+                addBtn.disabled = true;
+                addBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
+                addBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                addBtn.innerHTML = '<i class="fas fa-ban mr-2"></i>Tidak Tersedia';
+            }
+
+            // Store index for event handler
+            clone.querySelector('.add-btn')?.setAttribute('data-index', index);
+
+            container.appendChild(clone);
+        });
+    }
+
+    document.addEventListener('click', function (e) {
+        if (e.target && e.target.classList.contains('add-btn')) {
+            const index = e.target.getAttribute('data-index');
+            const product = displayedProducts[index];
+            if (product) {
+                addToSewaList(product);
+            }
+        }
+    });
+
+    // Fungsi untuk menambahkan produk ke daftar sewa
+    function addToSewaList(product) {
+        const tbody = document.getElementById('sewaList');
+        const row = document.createElement('tr');
+
+        row.className = 'odd:bg-white even:bg-gray-50 hover:bg-gray-100 text-sm';
+        row.innerHTML = `
+        <td class="px-4 py-2">${product.name}</td>
+        <td class="px-4 py-2">${formatCurrency(product.harga_sewa)}</td>
+        <td class="px-4 py-2">${product.qty}</td>
+        <td class="px-4 py-2">
+            <input type="number" name="qty[]" value="1" min="1" max="${product.stok_tersedia}" class="w-16 border border-gray-300 rounded px-1 py-0.5">
+        </td>
+        <td class="px-4 py-2">
+            <button class="remove-btn text-red-500 hover:underline">Hapus</button>
+        </td>
+    `;
+        tbody.appendChild(row);
+    }
+
+    // Fungsi untuk format mata uang
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+        }).format(amount);
+    }
+
+    // Fungsi untuk menyembunyikan semua section
+    function hideAllSections() {
+        document.getElementById('results').classList.add('hidden');
+        document.getElementById('noResults').classList.add('hidden');
+        document.getElementById('errorMessage').classList.add('hidden');
+    }
+
+    // Fungsi untuk menampilkan error
+    function showError(message) {
+        document.getElementById('errorText').textContent = message;
+        document.getElementById('errorMessage').classList.remove('hidden');
+    }
+
+    // Allow Enter key to search
+    document.getElementById('searchInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            searchProducts();
+        }
+    });
+</script>
+{% endblock %}
