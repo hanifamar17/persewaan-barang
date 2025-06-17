@@ -34,7 +34,7 @@ def load_user(user_id):
     user_data = cursor.fetchone()
     conn.close()
     if user_data:
-        return User(user_data['user_id'], user_data['username'], user_data['password'], user_data['role'])
+        return User(user_data['user_id'], user_data['name'], user_data['username'], user_data['password'], user_data['role'])
     return None
 
 @app.route('/', methods=['GET', 'POST'])
@@ -55,7 +55,7 @@ def login():
         conn.close()
 
         if user_data and check_password_hash(user_data['password'], password_input):
-            user = User(user_data['user_id'], user_data['username'], user_data['password'], user_data['role'])
+            user = User(user_data['user_id'], user_data['name'], user_data['username'], user_data['password'], user_data['role'])
             login_user(user)
             flash('Login successful', 'success')
             return redirect(url_for('dashboard'))
@@ -529,7 +529,7 @@ def sewa():
 
     return render_template('transactions/transaction.html', 
                            products=products, customers=customers, user=current_user,
-                            no_nota=no_nota,
+                        no_nota=no_nota,
                            today=date.today())
 
 #--- Route: cari ketersediaan produk ---
@@ -597,68 +597,59 @@ def search_products():
     return jsonify(products)
 
 #--- Route: Simpan transaksi ---
-@app.route('/save_transaction', methods=['POST'])
-def save_transaction():
-    data = request.get_json()
-    
+@app.route("/simpan_transaksi", methods=["POST"])
+def simpan_transaksi():
     try:
         conn = get_db_connection()
-        cursor = conn.cursor()
-        
-        # Generate nota number
-        today = datetime.now().strftime("%Y%m%d")
-        cursor.execute("SELECT COUNT(*) FROM transactions WHERE DATE(tanggal_nota) = CURDATE()")
-        daily_count = cursor.fetchone()[0] + 1
-        no_nota = f"RNT{today}{daily_count:03d}"
-        
-        # Insert transaction
-        transaction_query = """
-            INSERT INTO transactions 
-            (user_id, customer_id, no_nota, tanggal_nota, tanggal_sewa, tanggal_kembali, 
-             status_pembayaran, status_pengembalian, total)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        
-        cursor.execute(transaction_query, (
-            1,  # Default user_id
-            1,  # Default customer_id
-            no_nota,
-            datetime.now().date(),
-            data['tanggal_sewa'],
-            data['tanggal_kembali'],
-            data['status_pembayaran'],
-            'belum',
-            data['total']
-        ))
-        
-        transaction_id = cursor.lastrowid
-        
-        # Insert transaction details
-        detail_query = """
-            INSERT INTO transaction_details (transaction_id, product_id, qty, harga_sewa)
-            VALUES (%s, %s, %s, %s)
-        """
-        
-        for item in data['items']:
-            cursor.execute(detail_query, (
-                transaction_id,
-                item['product_id'],
-                item['qty'],
-                item['harga_sewa']
-            ))
-        
+        cursor = conn.cursor(dictionary=True)
+
+        # Ambil data form utama
+        customer_name = request.form.get("customer_name")
+        user_id = request.form.get("user_id")
+        no_nota = request.form.get("no_nota")
+        tanggal_nota = request.form.get("tanggal_nota")
+        tanggal_sewa = request.form.get("tanggal_sewa")
+        tanggal_kembali = request.form.get("tanggal_kembali")
+        status_pembayaran = request.form.get("status_pembayaran")
+
+        # Cari customer_id, atau buat baru jika tidak ada
+        cursor.execute("SELECT customer_id FROM customers WHERE name = %s", (customer_name,))
+        customer = cursor.fetchone()
+        if customer:
+            customer_id = customer["customer_id"]
+        else:
+            cursor.execute("INSERT INTO customers (name) VALUES (%s)", (customer_name,))
+            conn.commit()
+            customer_id = cursor.lastrowid
+
+        # Hitung total
+        qty_list = request.form.getlist("qty[]")
+        harga_list = request.form.getlist("harga_sewa[]")
+        total = sum(int(qty) * float(harga) for qty, harga in zip(qty_list, harga_list))
+
+        # Simpan ke tabel transactions
+        cursor.execute("""
+            INSERT INTO transactions (customer_id, user_id, no_nota, tanggal_nota, tanggal_sewa, tanggal_kembali, status_pembayaran, total)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (customer_id, user_id, no_nota, tanggal_nota, tanggal_sewa, tanggal_kembali, status_pembayaran, total))
         conn.commit()
-        cursor.close()
+        transaction_id = cursor.lastrowid
+
+        # Simpan ke tabel transaction_details
+        product_ids = request.form.getlist("product_id[]")
+        for product_id, qty, harga in zip(product_ids, qty_list, harga_list):
+            cursor.execute("""
+                INSERT INTO transaction_details (transaction_id, product_id, qty, harga_sewa)
+                VALUES (%s, %s, %s, %s)
+            """, (transaction_id, product_id, qty, harga))
+
+        conn.commit()
         conn.close()
-        
-        return jsonify({
-            'success': True, 
-            'message': 'Transaksi berhasil disimpan',
-            'no_nota': no_nota
-        })
-        
+
+        #return redirect(url_for("sewa"))
+        return jsonify({'status': 'success', 'message': 'Transaksi berhasil disimpan'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
 if __name__ == '__main__':

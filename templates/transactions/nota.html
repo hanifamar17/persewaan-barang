@@ -1,0 +1,222 @@
+<div class="max-w-4xl mx-auto space-y-6">
+        
+        <!-- Header Info -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <h2 class="text-xl font-semibold text-gray-900">Ringkasan Transaksi</h2>
+                    <p class="text-sm text-gray-600 mt-1">Periksa kembali detail transaksi sebelum menyimpan</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-gray-600">No. Nota</div>
+                    <div class="font-mono text-lg font-semibold text-gray-900">NT-2025001</div>
+                </div>
+            </div>
+            
+            <!-- Transaction Info Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                <div>
+                    <div class="text-gray-600">Customer</div>
+                    <div class="font-medium text-gray-900">Ahmad Rizki</div>
+                </div>
+                <div>
+                    <div class="text-gray-600">Tanggal Sewa</div>
+                    <div class="font-medium text-gray-900">18 Jun 2025</div>
+                </div>
+                <div>
+                    <div class="text-gray-600">Tanggal Kembali</div>
+                    <div class="font-medium text-gray-900">20 Jun 2025</div>
+                </div>
+                <div>
+                    <div class="text-gray-600">Durasi Sewa</div>
+                    <div class="font-medium text-gray-900">3 Hari</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product List -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-lg font-medium text-gray-900">Daftar Produk</h3>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Produk
+                            </th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Jumlah
+                            </th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Harga/Hari
+                            </th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Durasi
+                            </th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Subtotal
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-gray-900">Tenda Dome 4 Orang</div>
+                                <div class="text-sm text-gray-500">SKU: TD-001</div>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    2 unit
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right font-medium text-gray-900">
+                                Rp 50.000
+                            </td>
+                            <td class="px-6 py-4 text-right text-gray-600">
+                                3 hari
+                            </td>
+                            <td class="px-6 py-4 text-right font-semibold text-gray-900">
+                                Rp 300.000
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-gray-900">Sleeping Bag</div>
+                                <div class="text-sm text-gray-500">SKU: SB-002</div>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    4 unit
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right font-medium text-gray-900">
+                                Rp 25.000
+                            </td>
+                            <td class="px-6 py-4 text-right text-gray-600">
+                                3 hari
+                            </td>
+                            <td class="px-6 py-4 text-right font-semibold text-gray-900">
+                                Rp 300.000
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4">
+                                <div class="font-medium text-gray-900">Kompor Portable</div>
+                                <div class="text-sm text-gray-500">SKU: KP-003</div>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                    1 unit
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-right font-medium text-gray-900">
+                                Rp 35.000
+                            </td>
+                            <td class="px-6 py-4 text-right text-gray-600">
+                                3 hari
+                            </td>
+                            <td class="px-6 py-4 text-right font-semibold text-gray-900">
+                                Rp 105.000
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Summary & Payment -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            <!-- Payment Summary -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Ringkasan Pembayaran</h3>
+                
+                <div class="space-y-3">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Subtotal</span>
+                        <span class="font-medium text-gray-900">Rp 705.000</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Deposit (20%)</span>
+                        <span class="font-medium text-gray-900">Rp 141.000</span>
+                    </div>
+                    <div class="flex justify-between text-sm">
+                        <span class="text-gray-600">Biaya Admin</span>
+                        <span class="font-medium text-gray-900">Rp 5.000</span>
+                    </div>
+                    <div class="border-t border-gray-200 pt-3">
+                        <div class="flex justify-between">
+                            <span class="text-base font-medium text-gray-900">Total</span>
+                            <span class="text-xl font-bold text-gray-900">Rp 710.000</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Status -->
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-600">Status Pembayaran</span>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                            Belum Lunas
+                        </span>
+                    </div>
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="text-sm text-gray-600">Sisa Pembayaran</span>
+                        <span class="font-semibold text-red-600">Rp 569.000</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Info -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-medium text-gray-900 mb-4">Informasi Tambahan</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="text-sm text-gray-600 mb-1">Operator</div>
+                        <div class="font-medium text-gray-900">Admin User</div>
+                    </div>
+                    
+                    <div>
+                        <div class="text-sm text-gray-600 mb-1">Tanggal Transaksi</div>
+                        <div class="font-medium text-gray-900">17 Jun 2025, 14:30</div>
+                    </div>
+                    
+                    <div>
+                        <div class="text-sm text-gray-600 mb-1">Catatan</div>
+                        <div class="text-sm text-gray-700 bg-gray-50 p-3 rounded-md">
+                            Pastikan semua equipment dalam kondisi baik saat pengembalian
+                        </div>
+                    </div>
+                    
+                    <!-- Important Reminders -->
+                    <div class="bg-amber-50 border border-amber-200 rounded-md p-3">
+                        <div class="text-sm font-medium text-amber-800 mb-1">Peringatan Penting:</div>
+                        <ul class="text-sm text-amber-700 space-y-1">
+                            <li>• Keterlambatan pengembalian dikenakan denda Rp 10.000/hari</li>
+                            <li>• Kerusakan equipment akan dipotong dari deposit</li>
+                            <li>• Hubungi kami jika ada perubahan jadwal</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div class="flex flex-col sm:flex-row gap-3 sm:justify-end">
+                <button class="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors duration-150">
+                    Edit Transaksi
+                </button>
+                <button class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-150">
+                    Konfirmasi & Simpan
+                </button>
+                <button class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors duration-150">
+                    Print Nota
+                </button>
+            </div>
+        </div>
+    </div>
