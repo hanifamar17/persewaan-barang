@@ -74,7 +74,7 @@
                                 Tanggal Sewa <span class="text-red-500">*</span>
                             </label>
                             <input type="date" id="tanggalSewa" value="{{today}}" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                                class="w-full p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
                         </div>
                         <div class="space-y-2">
                             <label class="block text-sm font-medium text-gray-700">
@@ -82,7 +82,7 @@
                                 Tanggal Kembali <span class="text-red-500">*</span>
                             </label>
                             <input type="date" id="tanggalKembali" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
+                                class="w-full p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
                         </div>
                     </div>
 
@@ -94,17 +94,13 @@
                         </label>
                         <div class="relative">
                             <input type="text" id="searchInput" placeholder="Masukkan nama atau kode produk..."
-                                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
-                            <button type="button" onclick="searchProducts()"
-                                class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200">
-                                <i class="fas fa-search"></i>
-                            </button>
+                                class="w-full p-2.5 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
                         </div>
                     </div>
 
                     <!-- Search Button -->
                     <button type="button" onclick="searchProducts()"
-                        class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 px-6 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium">
+                        class="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-2.5 px-6 rounded-lg hover:from-blue-700 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium">
                         <i class="fas fa-search mr-2"></i>
                         Cari Produk
                     </button>
@@ -245,10 +241,10 @@
                 <!-- Nota Transaksi Section -->
                 <div class="flex items-center mb-6">
                     <div class="bg-purple-100 p-2 rounded-lg mr-3">
-                        <i class="fas fa-shopping-cart text-purple-600 text-md"></i>
+                        <i class="fa-solid fa-receipt text-purple-600 text-md"></i>
                     </div>
                     <div>
-                        <h2 class="text-md font-medium text-gray-900">Informasi Nota Transaksi</h2>
+                        <h2 class="text-md font-medium text-gray-900">Informasi Transaksi</h2>
                         <p class="text-sm text-gray-600">Lengkapi detail transaksi di bawah ini</p>
                     </div>
                 </div>
@@ -264,41 +260,102 @@
                             <p class="py-2 text-gray-500 text-sm text-justify">Masukkan informasi pelanggan yang
                                 melakukan penyewaan serta nama petugas (customer service) yang mencatat transaksi.</p>
                         </div>
-                        <div class="grid grid-cols-1 gap-6 w-2/3">
-                            <!-- Customer Name dengan improved design -->
-                            <div class="space-y-2">
-                                <label for="customer_name" class="block text-sm font-medium text-gray-700">
-                                    Nama Pelanggan
-                                    <span class="text-red-500 ml-1">*</span>
-                                </label>
-                                <div class="relative">
-                                    <input list="customerList" id="customer_name" name="customer_name"
-                                        placeholder="Cari nama atau ketik nama baru" required
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-                                        autocomplete="off">
-                                    <datalist id="customerList">
-                                        {% for customer in customers %}
-                                        <option value="{{ customer.name }}">
-                                            {% endfor %}
-                                    </datalist>
-                                </div>
-                                <p class="text-xs text-gray-500">Pilih dari daftar atau ketik nama baru</p>
-                            </div>
-
-                            <!-- User Name dengan visual indicator -->
-                            <div class="space-y-2">
-                                <label class="block text-sm font-medium text-gray-700">
-                                    Nama Customer Service
-                                </label>
-                                <div class="relative">
-                                    <input type="text" value="{{ user.name }}" disabled required
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3">
-                                        <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <div class="w-2/3 space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <!-- User Name dengan visual indicator -->
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-700">
+                                        Nama Customer Service
+                                    </label>
+                                    <div class="relative">
+                                        <input type="text" value="{{ user.name }}" disabled required
+                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5">
+                                        <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                        </div>
+                                        <input type="hidden" name="user_id" value="1">
                                     </div>
-                                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                                    <p class="text-xs text-gray-500">User yang sedang login</p>
                                 </div>
-                                <p class="text-xs text-gray-500">User yang sedang login</p>
+                                <!-- Customer Name dengan improved design -->
+                                <div class="space-y-2">
+                                    <label for="customer_name" class="block text-sm font-medium text-gray-700">
+                                        Nama Pelanggan
+                                        <span class="text-red-500 ml-1">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <input list="customerList" id="customer_name" name="customer_name"
+                                            placeholder="Cari nama atau ketik nama baru" required
+                                            class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5"
+                                            autocomplete="off">
+                                        <datalist id="customerList">
+                                            {% for customer in customers %}
+                                            <option value="{{ customer.name }}">
+                                                {% endfor %}
+                                        </datalist>
+                                    </div>
+                                    <p class="text-xs text-gray-500">Pelanggan baru? masukkan informasi pelanggan baru <a
+                                            class="cursor-pointer underline text-blue-700 hover:text-blue-800"
+                                            id="info-text">di
+                                            sini</a></p>
+                                </div>
+                            </div>
+                            <div id="more-text"
+                                class="hidden mt-2 text-gray-800 text-sm text-justify leading-tight rounded bg-gray-50 p-6">
+                                <div class="mb-4">
+                                    <h1 class="font-medium">
+                                        Informasi Pelanggan Baru
+                                    </h1>
+                                    <p class="text-gray-500 text-sm text-justify">Gunakan form ini hanya untuk
+                                        menambahkan informasi pelanggan baru. Abaikan form ini jika pelanggan sudah terdaftar
+                                        dalam sistem</p>
+                                </div>
+                                <div class="grid grid-cols-1 gap-6">
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-700">
+                                            No. Telp/Hp
+                                        </label>
+                                        <div class="relative">
+                                            <input id="customer_phone" name="customer_phone"
+                                                placeholder="Masukkan no Hp pelanggan"
+                                                class="border border-gray-300 text-gray-900 bg-white text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5"
+                                                autocomplete="off">
+                                        </div>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="block text-sm font-medium text-gray-700">
+                                            Alamat
+                                        </label>
+                                        <div class="relative">
+                                            <textarea id="customer_address" name="customer_address"
+                                                placeholder="Masukkan alamat pelanggan" required
+                                                class="border border-gray-300 text-gray-900 bg-white text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5"
+                                                autocomplete="off"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 gap-6">
+                                <div class="space-y-2">
+                                    <label for="jaminan" class="block text-sm font-medium text-gray-700">
+                                        Jaminan
+                                        <span class="text-red-500 ml-1">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <input id="jaminan" name="jaminan" placeholder="contoh: KTP, SIM, dll" required
+                                            class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5"
+                                            autocomplete="off">
+                                    </div>
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="note" class="block text-sm font-medium text-gray-700">
+                                        Catatan
+                                    </label>
+                                    <div class="relative">
+                                        <textarea name="note" placeholder="Masukkan catatan tambahan jika ada"
+                                            class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5"></textarea>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -342,7 +399,7 @@
                                     </label>
                                     <input type="date" id="tanggal_nota" name="tanggal_nota" value="{{ today }}"
                                         required
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                        class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5">
                                 </div>
 
                                 <div class="space-y-2">
@@ -352,7 +409,7 @@
                                     </label>
                                     <input type="date" name="tanggal_sewa" id="inputTanggalSewa"
                                         value="{{tanggal_sewa}}" required
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"">
+                                        class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5">
                                 </div>
 
                                 <div class=" space-y-2">
@@ -362,7 +419,7 @@
                                     </label>
                                     <input type="date" name="tanggal_kembali" id="inputTanggalKembali"
                                         value="{{ tanggal_kembali }}" required
-                                        class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                        class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5">
                                 </div>
 
                                 <!-- Status Pembayaran dengan visual status -->
@@ -373,14 +430,10 @@
                                     </label>
                                     <div class="relative">
                                         <select id="status_pembayaran" name="status_pembayaran" required
-                                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+                                            class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5">
                                             <option value="belum lunas">Belum Lunas</option>
                                             <option value="lunas">Lunas</option>
                                         </select>
-                                    </div>
-                                    <div class="flex items-center gap-2 mt-2">
-                                        <div class="w-2 h-2 bg-amber-400 rounded-full"></div>
-                                        <p class="text-xs text-gray-500">Status saat ini: Belum Lunas</p>
                                     </div>
                                 </div>
                             </div>
@@ -390,7 +443,7 @@
                                 <button type="submit"
                                     class="inline-flex items-center gap-2 px-5 py-2 rounded-md bg-blue-600 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all duration-200">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4"
                                             d="M5 13l4 4L19 7" />
                                     </svg>
                                     Simpan Transaksi
@@ -428,7 +481,7 @@
                     <div class="mt-4 pt-4 border-t border-gray-100">
                         <button
                             class="add-btn w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 font-medium">
-                            <i class="fas fa-plus mr-2"></i>
+                            <i class="fa-solid fa-cart-shopping mr-2"></i>
                             Tambah ke Keranjang
                         </button>
                     </div>
@@ -472,6 +525,24 @@
         document.getElementById('inputTanggalKembali').value = document.getElementById('tanggalKembali').value;
     });
 </script>
+
+<!--More text-->
+<script>
+    document.getElementById('info-text').addEventListener('click', function () {
+        var moreText = document.getElementById('more-text');
+        moreText.classList.toggle('hidden');
+    });
+
+    document.getElementById('info-icon').addEventListener('click', function () {
+        var moreText = document.getElementById('more-text');
+        moreText.classList.toggle('hidden');
+    });
+</script>
+<style>
+    .hidden-column {
+        display: none;
+    }
+</style>
 
 <!--Cek ketersediaan produk-->
 <script>

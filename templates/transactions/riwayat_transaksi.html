@@ -1,0 +1,127 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+<section class="w-full p-8 bg-white rounded shadow">
+    <div class="text-center md:text-left space-y-2 mb-8">
+        <h1 class="text-xl font-semibold text-gray-800">Riwayat Transaksi Sewa</h1>
+        <p class="text-gray-600 text-sm">Lihat transaksi sewa</p>
+    </div>
+
+    <form method="get" class="flex items-center gap-4 mb-6">
+        <div>
+            <label for="start_date" class="block text-sm font-medium">Dari Tanggal</label>
+            <input type="date" name="start_date" id="start_date" value="{{ start_date or '' }}"
+                class="border rounded p-2 text-sm">
+        </div>
+        <div>
+            <label for="end_date" class="block text-sm font-medium">Sampai Tanggal</label>
+            <input type="date" name="end_date" id="end_date" value="{{ end_date or '' }}"
+                class="border rounded p-2 text-sm">
+        </div>
+        <div class="mt-6">
+            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Filter</button>
+        </div>
+    </form>
+
+    <div class="overflow-x-auto w-full">
+    <table id="riwayat-transaksi-table" class="w-full text-sm divide-y divide-gray-200">
+        <thead class="bg-gray-100">
+            <tr class="bg-gray-50">
+                <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Nota</th>
+                <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pelanggan</th>
+                <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Nota</th>
+                <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Sewa</th>
+                <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tanggal Kembali</th>
+                <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for t in transactions %}
+            <tr class="odd:bg-white even:bg-gray-50 hover:bg-gray-100 text-sm">
+                <td class="px-3 py-2 whitespace-nowrap text-gray-900">{{ t.no_nota }}</td>
+                <td class="px-3 py-2 whitespace-nowrap text-gray-900">{{ t.customer_name }}</td>
+                <td class="px-3 py-2 whitespace-nowrap text-gray-900">{{ t.tanggal_nota.strftime('%d-%m-%Y') }}</td>
+                <td class="px-3 py-2 whitespace-nowrap text-gray-900">{{ t.tanggal_sewa.strftime('%d-%m-%Y') }}</td>
+                <td class="px-3 py-2 whitespace-nowrap text-gray-900">{{ t.tanggal_kembali.strftime('%d-%m-%Y') }}</td>
+                <td class="px-3 py-2 whitespace-nowrap text-gray-900">Rp {{ "{:,.0f}".format(t.total) }}</td>
+                <td class="px-3 py-2 whitespace-nowrap text-gray-900">
+                    {% if t.status_pembayaran == 'lunas' %}
+                    <span class="text-green-600 font-semibold">Lunas</span>
+                    {% else %}
+                    <span class="text-red-600 font-semibold">Belum Lunas</span>
+                    {% endif %}
+                </td>
+                <td class="px-4 py-2">
+                    <a href="#"
+                        class="text-blue-600 hover:underline">Lihat</a>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" class="text-center text-gray-500 py-4">Tidak ada data</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+
+</section>
+
+<!--datatables-->
+<script>
+  $(document).ready(function () {
+    $('#riwayat-transaksi-table').DataTable({
+      responsive: true,
+      pageLength: 10,
+      lengthMenu: [5, 10, 25, 50],
+      language: {
+        search: "Cari:",
+        lengthMenu: "Tampilkan _MENU_ data",
+        info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+        paginate: {
+          next: "Berikutnya",
+          previous: "Sebelumnya"
+        }
+      },
+      columnDefs: [
+        {
+          targets: 0,
+          searchable: false,
+          orderable: false,
+          render: function (data, type, row, meta) {
+            return meta.row + 1;
+          }
+        }
+      ],
+      // Atur layout DOM untuk posisi elemen
+      dom: '<"flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4"<"mb-2 sm:mb-0"l><"mb-2 sm:mb-0 flex items-center justify-end gap-2"f<"tambah-btn">>>rt<"flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4"<"mb-2 sm:mb-0"i><"mb-2 sm:mb-0"p>>',
+
+      initComplete: function () {
+
+        // Styling untuk controls atas
+        $('.dataTables_length label').addClass('text-sm font-medium text-gray-700');
+        $('.dataTables_filter label').addClass('text-sm font-medium text-gray-700');
+        $('.dataTables_length select').addClass('ml-2 px-2 py-1 border border-gray-300 rounded text-sm');
+        $('.dataTables_filter input').addClass('ml-2 px-3 py-2 border border-gray-300 rounded text-sm');
+
+        // Styling untuk info dan pagination di bawah
+        $('.dataTables_info').addClass('text-sm text-gray-600');
+        $('.dataTables_paginate').addClass('flex text-sm');
+      },
+
+      drawCallback: function () {
+        // Style pagination buttons setiap kali table di-draw
+        $('.dataTables_paginate .paginate_button').addClass('mx-1 px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50');
+        $('.dataTables_paginate .paginate_button.current').addClass('bg-blue-500 text-white border-blue-500');
+        $('.dataTables_paginate .paginate_button.disabled').addClass('text-gray-400 cursor-not-allowed');
+      }
+    });
+  });
+</script>
+
+{% endblock %}

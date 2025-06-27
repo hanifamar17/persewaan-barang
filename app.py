@@ -605,11 +605,15 @@ def simpan_transaksi():
 
         # Ambil data form utama
         customer_name = request.form.get("customer_name")
+        customer_phone = request.form.get("customer_phone")
+        customer_address = request.form.get("customer_address", "-") 
         user_id = request.form.get("user_id")
         no_nota = request.form.get("no_nota")
         tanggal_nota = request.form.get("tanggal_nota")
         tanggal_sewa = request.form.get("tanggal_sewa")
         tanggal_kembali = request.form.get("tanggal_kembali")
+        jaminan = request.form.get("jaminan", "-")
+        note = request.form.get("note", "-")
         status_pembayaran = request.form.get("status_pembayaran")
 
         # Cari customer_id, atau buat baru jika tidak ada
@@ -618,20 +622,21 @@ def simpan_transaksi():
         if customer:
             customer_id = customer["customer_id"]
         else:
-            cursor.execute("INSERT INTO customers (name) VALUES (%s)", (customer_name,))
+            cursor.execute("INSERT INTO customers (name, phone_number, address) VALUES (%s, %s, %s)", (customer_name, customer_phone, customer_address))
             conn.commit()
             customer_id = cursor.lastrowid
 
         # Hitung total
+        lama_sewa_list = request.form.get("lama_sewa[]")
         qty_list = request.form.getlist("qty[]")
         harga_list = request.form.getlist("harga_sewa[]")
-        total = sum(int(qty) * float(harga) for qty, harga in zip(qty_list, harga_list))
+        total = sum(int(qty) * int(lama_sewa) * float(harga) for qty, lama_sewa, harga in zip(lama_sewa_list, qty_list, harga_list))
 
         # Simpan ke tabel transactions
         cursor.execute("""
-            INSERT INTO transactions (customer_id, user_id, no_nota, tanggal_nota, tanggal_sewa, tanggal_kembali, status_pembayaran, total)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """, (customer_id, user_id, no_nota, tanggal_nota, tanggal_sewa, tanggal_kembali, status_pembayaran, total))
+            INSERT INTO transactions (customer_id, user_id, no_nota, tanggal_nota, tanggal_sewa, tanggal_kembali, lama_sewa, status_pembayaran, jaminan, note, total)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """, (customer_id, user_id, no_nota, tanggal_nota, tanggal_sewa, tanggal_kembali, lama_sewa_list, status_pembayaran, jaminan, note, total))
         conn.commit()
         transaction_id = cursor.lastrowid
 
@@ -650,6 +655,46 @@ def simpan_transaksi():
         return jsonify({'status': 'success', 'message': 'Transaksi berhasil disimpan'})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
+
+
+## MODULE RIWAYAT TRANSAKSI
+#--- Route: Halaman riwayat transaksi --- 
+@app.route('/riwayat_transaksi')
+#@login_required
+def riwayat_transaksi():
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    # Ambil parameter rentang waktu dari form (default: 30 hari terakhir)
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    if not start_date or not end_date:
+        # Default: 30 hari terakhir
+        cursor.execute("""
+            SELECT t.transaction_id, t.no_nota, t.tanggal_nota, t.tanggal_sewa, t.tanggal_kembali,
+                   c.name AS customer_name, t.status_pembayaran, t.total
+            FROM transactions t
+            JOIN customers c ON t.customer_id = c.customer_id
+            ORDER BY t.tanggal_nota DESC
+            LIMIT 50
+        """)
+    else:
+        # Filter berdasarkan tanggal nota
+        cursor.execute("""
+            SELECT t.transaction_id, t.no_nota, t.tanggal_nota, t.tanggal_sewa, t.tanggal_kembali,
+                   c.name AS customer_name, t.status_pembayaran, t.total
+            FROM transactions t
+            JOIN customers c ON t.customer_id = c.customer_id
+            WHERE t.tanggal_nota BETWEEN %s AND %s
+            ORDER BY t.tanggal_nota DESC
+        """, (start_date, end_date))
+
+    transactions = cursor.fetchall()
+    conn.close()
+
+    return render_template('transactions/riwayat_transaksi.html', transactions=transactions, start_date=start_date, end_date=end_date, user=current_user)
+
 
 
 if __name__ == '__main__':

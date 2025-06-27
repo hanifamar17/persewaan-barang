@@ -16,6 +16,7 @@
         </div>
         <div class="w-2/3">
             <form id="addUserForm" method="POST" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <!-- Grid for 2 Columns -->
                 <div class="grid gap-6 md:grid-cols-2">
                     <!-- Name -->
