@@ -46,7 +46,7 @@
 </style>
 <section class="w-full p-8 bg-white rounded shadow">
     <div class="text-center md:text-left space-y-2 mb-8">
-        <h1 class="text-xl font-semibold text-gray-800">Transaksi Sewa</h1>
+        <h1 class="text-xl font-semibold text-gray-800">Edit Transaksi Sewa</h1>
         <p class="text-gray-600 text-sm">Cari produk dan masukkan ke list sewa</p>
     </div>
 
@@ -73,7 +73,7 @@
                                 <i class="fas fa-calendar-alt mr-2 text-gray-400"></i>
                                 Tanggal Sewa <span class="text-red-500">*</span>
                             </label>
-                            <input type="date" id="tanggalSewa" value="{{today}}" required
+                            <input type="date" id="tanggalSewa" value="{{transaction.tanggal_sewa}}" required
                                 class="w-full p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
                         </div>
                         <div class="space-y-2">
@@ -81,7 +81,7 @@
                                 <i class="fas fa-calendar-check mr-2 text-gray-400"></i>
                                 Tanggal Kembali <span class="text-red-500">*</span>
                             </label>
-                            <input type="date" id="tanggalKembali" required
+                            <input type="date" id="tanggalKembali" value="{{transaction.tanggal_kembali}}" required
                                 class="w-full p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
                         </div>
                     </div>
@@ -165,7 +165,7 @@
 
         <!-- Rental List Section -->
         <section class="mt-12">
-            <form id="formSimpanTransaksi" class="space-y-8">
+            <form id="formSimpanTransaksi" method="post" class="space-y-8">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <section class="mb-8">
                     <div class="flex items-center mb-6">
@@ -268,7 +268,7 @@
                                         Nama Customer Service
                                     </label>
                                     <div class="relative">
-                                        <input type="text" value="{{ user.name }}" disabled required
+                                        <input type="text" value="{{transaction.user_name}}" disabled required
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5">
                                         <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                                             <div class="w-2 h-2 bg-green-400 rounded-full"></div>
@@ -285,19 +285,20 @@
                                     </label>
                                     <div class="relative">
                                         <input list="customerList" id="customer_name" name="customer_name"
-                                            placeholder="Cari nama atau ketik nama baru" required
+                                            value="{{transaction.customer_name}}" required
                                             class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5"
                                             autocomplete="off">
                                         <datalist id="customerList">
                                             {% for customer in customers %}
-                                            <option value="{{ customer.name }}">
-                                                {% endfor %}
+                                            <option value="{{ customer.name }}"></option>
+                                            {% endfor %}
                                         </datalist>
                                     </div>
                                     <p class="text-xs text-gray-500">Pelanggan baru? masukkan informasi pelanggan baru
                                         <a class="cursor-pointer underline text-blue-700 hover:text-blue-800"
                                             id="info-text">di
-                                            sini</a></p>
+                                            sini</a>
+                                    </p>
                                 </div>
                             </div>
                             <div id="more-text"
@@ -329,7 +330,7 @@
                                         </label>
                                         <div class="relative">
                                             <textarea id="customer_address" name="customer_address"
-                                                placeholder="Masukkan alamat pelanggan" required
+                                                placeholder="Masukkan alamat pelanggan"
                                                 class="border border-gray-300 text-gray-900 bg-white text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5"
                                                 autocomplete="off"></textarea>
                                         </div>
@@ -343,7 +344,7 @@
                                         <span class="text-red-500 ml-1">*</span>
                                     </label>
                                     <div class="relative">
-                                        <input id="jaminan" name="jaminan" placeholder="contoh: KTP, SIM, dll" required
+                                        <input id="jaminan" name="jaminan" value="{{transaction.jaminan}}" required
                                             class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5"
                                             autocomplete="off">
                                     </div>
@@ -353,8 +354,8 @@
                                         Catatan
                                     </label>
                                     <div class="relative">
-                                        <textarea name="note" placeholder="Masukkan catatan tambahan jika ada"
-                                            class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5"></textarea>
+                                        <textarea name="note" id="note"
+                                            class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5">{{transaction.note}}</textarea>
                                     </div>
                                 </div>
                             </div>
@@ -377,8 +378,8 @@
                                         Nomor Nota
                                     </label>
                                     <div class="relative">
-                                        <input type="text" id="no_nota" name="no_nota" value="{{ no_nota }}" readonly
-                                            required
+                                        <input type="text" id="no_nota" name="no_nota" value="{{ transaction.no_nota }}"
+                                            readonly required
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                         <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
@@ -398,8 +399,8 @@
                                         Tanggal Nota
                                         <span class="text-red-500 ml-1">*</span>
                                     </label>
-                                    <input type="date" id="tanggal_nota" name="tanggal_nota" value="{{ today }}"
-                                        required
+                                    <input type="date" id="tanggal_nota" name="tanggal_nota"
+                                        value="{{ transaction.tanggal_nota }}" required
                                         class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5">
                                 </div>
 
@@ -410,7 +411,7 @@
                                     </label>
                                     <div class="relative">
                                         <input type="date" name="tanggal_sewa" id="inputTanggalSewa"
-                                            value="{{tanggal_sewa}}" required readonly
+                                            value="{{transaction.tanggal_sewa}}" required readonly
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                         <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
@@ -430,7 +431,7 @@
                                     </label>
                                     <div class="relative">
                                         <input type="date" name="tanggal_kembali" id="inputTanggalKembali"
-                                            value="{{ tanggal_kembali }}" required readonly
+                                            value="{{ transaction.tanggal_kembali }}" required readonly
                                             class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
                                         <div class="absolute inset-y-0 right-0 flex items-center pr-3">
                                             <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor"
@@ -452,6 +453,8 @@
                                     <div class="relative">
                                         <select id="status_pembayaran" name="status_pembayaran" required
                                             class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5">
+                                            <option value="{{transaction.status_pembayaran}}">
+                                                {{transaction.status_pembayaran}}</option>
                                             <option value="belum lunas">Belum Lunas</option>
                                             <option value="lunas">Lunas</option>
                                         </select>
@@ -559,11 +562,20 @@
         moreText.classList.toggle('hidden');
     });
 </script>
+
 <style>
     .hidden-column {
         display: none;
     }
 </style>
+
+<div id="old-data" data-json='{{ product_details | tojson | safe }}'></div>
+
+<script>
+    const dataEl = document.getElementById('old-data');
+    const oldData = JSON.parse(dataEl.dataset.json);
+    console.log(oldData);
+</script>
 
 <!--Cek ketersediaan produk-->
 <script>
@@ -715,7 +727,7 @@
     });
 
     // Fungsi untuk menambahkan produk ke daftar sewa
-    function addToSewaList(product) {
+    function addToSewaList(product, isOld = false) {
         // Cek jika produk sudah ada di list
         const existingItem = sewaItems.find(item => item.product_id === product.product_id);
         if (existingItem) {
@@ -738,9 +750,9 @@
         const tanggalSewa = new Date(document.getElementById('tanggalSewa').value);
         const tanggalKembali = new Date(document.getElementById('tanggalKembali').value);
         const oneDay = 24 * 60 * 60 * 1000;
-        const lamaSewa = Math.max(Math.round((tanggalKembali - tanggalSewa) / oneDay), 1); // minimal 1 hari
+        const lamaSewa = isOld ? product.lama_sewa : Math.max(Math.round((tanggalKembali - tanggalSewa) / oneDay), 1); // minimal 1 hari
 
-        const qty = 1;
+        const qty = isOld ? product.qty : 1;
         const subtotal = product.harga_sewa * lamaSewa * qty;
 
         row.innerHTML = `
@@ -750,7 +762,7 @@
                       <i class="fas fa-box text-blue-600 text-sm"></i>
                   </div>
                   <div>
-                      <p class="font-medium text-gray-900">${product.name}</p>
+                      <p class="font-medium text-gray-900">${product.product_name}</p>
                       <p class="text-xs text-gray-500">Kode: ${product.product_id}</p>
                       <input type="hidden" name="product_id[]" value="${product.product_id}">
                   </div>
@@ -763,26 +775,26 @@
           <td class="px-6 py-4">
               <input type="number" 
                      name="qty[]" 
-                     value="${qty}" 
+                     value="${product.qty}" 
                      min="1" 
-                     max="${product.stok_tersedia}" 
+                     max="${product.product_qty}" 
                      data-product-id="${product.product_id}"
                      data-price="${product.harga_sewa}"
-                     data-lama-sewa="${lamaSewa}"
+                     data-lama-sewa="${product.lama_sewa}"
                      class="qty-input w-20 border border-gray-300 rounded-md px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <p class="text-xs text-gray-500 mt-1">Max: ${product.stok_tersedia}</p>
+              <p class="text-xs text-gray-500 mt-1">Max: ${product.product_qty}</p>
           </td>
           <td class="px-6 py-4">
-              <span class="lama-sewa font-medium text-gray-900">${lamaSewa} hari</span>
-              <input type="hidden" name="lama_sewa[]" value="${lamaSewa}">
+              <span class="lama-sewa font-medium text-gray-900">${product.lama_sewa} hari</span>
+              <input type="hidden" name="lama_sewa[]" value="${product.lama_sewa}">
           </td>
           <td class="px-6 py-4">
               <span class="subtotal font-semibold text-gray-900" data-product-id="${product.product_id}">
-                  ${formatCurrency(subtotal)}
+                  ${formatCurrency(product.harga_sewa * product.qty * product.lama_sewa)}
               </span>
           </td>
           <td class="px-6 py-4">
-              <button class="remove-btn text-red-600 hover:text-red-800 hover:bg-red-50 px-3 py-1 rounded-md transition-colors duration-200" 
+              <button class="remove-btn text-red-600 hover:text-red-800 py-1 rounded-md transition-colors duration-200" 
                       data-product-id="${product.product_id}">
                   <i class="fas fa-trash mr-1"></i>Hapus
               </button>
@@ -800,6 +812,13 @@
         updateTotal();
         showSuccessMessage(`${product.name} berhasil ditambahkan ke keranjang`);
     }
+    window.addEventListener('DOMContentLoaded', () => {
+        if (Array.isArray(oldData)) {
+            oldData.forEach(product => {
+                addToSewaList(product, true);  // isOld = true
+            });
+        }
+    });
 
     function removeFromSewaList(productId) {
         const row = document.getElementById(`row-${productId}`);
@@ -939,7 +958,11 @@
     });
 </script>
 
-<!--simpan transaksi-->
+<!--Edit transaksi-->
+<div id="data-container" data-transaction-id="{{ transaction.transaction_id }}"></div>
+<script>
+    const transactionId = document.getElementById("data-container").dataset.transactionId;
+</script>
 <script>
     const simpanTransaksiForm = document.querySelector('#formSimpanTransaksi');
     if (simpanTransaksiForm) {
@@ -948,7 +971,7 @@
 
             const formData = new FormData(this);
 
-            fetch('/simpan_transaksi', {
+            fetch(`/transaksi/edit/${transactionId}`, {
                 method: 'POST',
                 body: formData,
                 headers: {

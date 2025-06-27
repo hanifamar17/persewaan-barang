@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, render_template, flash, jsonify
+from flask import Flask, request, redirect, url_for, render_template, flash, jsonify, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import User
 from db import get_db_connection
@@ -7,6 +7,7 @@ import os
 import uuid
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from datetime import datetime, date
+import traceback
 
 
 
@@ -22,8 +23,13 @@ login_manager.init_app(app)
 
 ## OTHERS
 #--- Format rupiah --- 
+@app.template_filter('format_rupiah')
 def format_rupiah(amount):
-    return f"Rp{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    try:
+        amount = float(amount)
+        return f"Rp{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+    except (ValueError, TypeError):
+        return amount 
 
 # --- Load user by ID for session ---
 @login_manager.user_loader
@@ -627,10 +633,21 @@ def simpan_transaksi():
             customer_id = cursor.lastrowid
 
         # Hitung total
-        lama_sewa_list = request.form.get("lama_sewa[]")
+        lama_sewa_list = request.form.get("lama_sewa[]") or "1"
         qty_list = request.form.getlist("qty[]")
         harga_list = request.form.getlist("harga_sewa[]")
-        total = sum(int(qty) * int(lama_sewa) * float(harga) for qty, lama_sewa, harga in zip(lama_sewa_list, qty_list, harga_list))
+
+        # Validasi & konversi
+        try:
+            lama_sewa = int(lama_sewa_list)
+        except ValueError:
+            lama_sewa = 1  # fallback default jika input tidak valid
+
+        # Hitung total dari subtotal tiap produk
+        total = sum(
+            int(qty) * float(harga) * lama_sewa
+            for qty, harga in zip(qty_list, harga_list)
+        )
 
         # Simpan ke tabel transactions
         cursor.execute("""
@@ -670,23 +687,29 @@ def riwayat_transaksi():
     end_date = request.args.get('end_date')
 
     if not start_date or not end_date:
-        # Default: 30 hari terakhir
         cursor.execute("""
-            SELECT t.transaction_id, t.no_nota, t.tanggal_nota, t.tanggal_sewa, t.tanggal_kembali,
-                   c.name AS customer_name, t.status_pembayaran, t.total
+             SELECT t.transaction_id, t.no_nota, t.tanggal_nota, t.tanggal_sewa, t.tanggal_kembali,
+                   c.name AS customer_name, t.status_pembayaran, t.status_pengembalian, t.total,
+                   GROUP_CONCAT(CONCAT(p.product_id, ' - ', p.name) SEPARATOR '\n') AS produk
             FROM transactions t
             JOIN customers c ON t.customer_id = c.customer_id
+            LEFT JOIN transaction_details td ON t.transaction_id = td.transaction_id
+            LEFT JOIN products p ON td.product_id = p.product_id
+            GROUP BY t.transaction_id
             ORDER BY t.tanggal_nota DESC
             LIMIT 50
         """)
     else:
-        # Filter berdasarkan tanggal nota
         cursor.execute("""
             SELECT t.transaction_id, t.no_nota, t.tanggal_nota, t.tanggal_sewa, t.tanggal_kembali,
-                   c.name AS customer_name, t.status_pembayaran, t.total
+                   c.name AS customer_name, t.status_pembayaran, t.total,
+                   GROUP_CONCAT(CONCAT(p.product_id, ' - ', p.name) SEPARATOR '\n') AS produk
             FROM transactions t
             JOIN customers c ON t.customer_id = c.customer_id
+            LEFT JOIN transaction_details td ON t.transaction_id = td.transaction_id
+            LEFT JOIN products p ON td.product_id = p.product_id
             WHERE t.tanggal_nota BETWEEN %s AND %s
+            GROUP BY t.transaction_id
             ORDER BY t.tanggal_nota DESC
         """, (start_date, end_date))
 
@@ -694,6 +717,207 @@ def riwayat_transaksi():
     conn.close()
 
     return render_template('transactions/riwayat_transaksi.html', transactions=transactions, start_date=start_date, end_date=end_date, user=current_user)
+
+#--- Route: Halaman detai riwayat transaksi --- 
+@app.route('/transaksi/detail/<int:transaction_id>')
+# @login_required
+def detail_transaksi(transaction_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Ambil transaksi utama
+        cursor.execute("""
+            SELECT 
+                t.transaction_id, t.no_nota, t.tanggal_nota, t.tanggal_sewa, t.tanggal_kembali,
+                t.lama_sewa, t.status_pembayaran, t.status_pengembalian, t.total, t.jaminan, t.note,
+                c.name AS customer_name, c.phone_number AS customer_phone, c.address AS customer_address,
+                u.name AS user_name
+            FROM transactions t
+            JOIN customers c ON t.customer_id = c.customer_id
+            JOIN users u ON t.user_id = u.user_id
+            WHERE t.transaction_id = %s
+        """, (transaction_id,))
+        transaction = cursor.fetchone()
+        if not transaction:
+            abort(404)
+
+        # Ambil detail produk
+        cursor.execute("""
+            SELECT 
+                td.qty, td.harga_sewa, p.name AS product_name, t.lama_sewa, p.product_id,
+                (td.qty * td.harga_sewa * t.lama_sewa) AS subtotal
+            FROM transaction_details td
+            JOIN products p ON td.product_id = p.product_id
+            JOIN transactions t ON td.transaction_id = t.transaction_id
+            WHERE td.transaction_id = %s
+        """, (transaction_id,))
+        details = cursor.fetchall()
+
+        # Konversi ke float agar aman diformat dengan filter rupiah
+        for item in details:
+            item['harga_sewa'] = float(item.get('harga_sewa', 0))
+            item['subtotal'] = float(item.get('subtotal', 0))
+
+        transaction['total'] = float(transaction.get('total', 0))
+
+        cursor.close()
+        conn.close()
+
+        app.jinja_env.filters['rupiah'] = format_rupiah
+        
+        return render_template(
+            'transactions/detail_transaksi.html',
+            transaction=transaction,
+            details=details,
+            user=current_user
+        )
+
+    except Exception as e:
+        print(f"[ERROR] Gagal mengambil detail transaksi: {e}")
+        abort(500)
+
+#--- Route: Halaman edit transaksi --- 
+@app.route('/transaksi/edit/<int:transaction_id>', methods=['GET', 'POST'])
+# @login_required
+def edit_transaksi(transaction_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    if request.method == 'POST':
+        try:
+            # Ambil data form utama
+            customer_name = request.form.get("customer_name")
+            customer_phone = request.form.get("customer_phone")
+            customer_address = request.form.get("customer_address", "-") 
+            user_id = request.form.get("user_id")
+            no_nota = request.form.get("no_nota")
+            tanggal_nota = request.form.get("tanggal_nota")
+            tanggal_sewa = request.form.get("tanggal_sewa")
+            tanggal_kembali = request.form.get("tanggal_kembali")
+            jaminan = request.form.get("jaminan", "-")
+            note = request.form.get("note", "-")
+            status_pembayaran = request.form.get("status_pembayaran")
+
+            # Cari customer_id, atau buat baru jika tidak ada
+            cursor.execute("SELECT customer_id FROM customers WHERE name = %s", (customer_name,))
+            customer = cursor.fetchone()
+            if customer:
+                customer_id = customer["customer_id"]
+            else:
+                cursor.execute("INSERT INTO customers (name, phone_number, address) VALUES (%s, %s, %s)", (customer_name, customer_phone, customer_address))
+                conn.commit()
+                customer_id = cursor.lastrowid
+
+            # Hitung total
+            lama_sewa_list = request.form.get("lama_sewa[]") or "1"
+            qty_list = request.form.getlist("qty[]")
+            harga_list = request.form.getlist("harga_sewa[]")
+
+            # Validasi & konversi
+            try:
+                lama_sewa = int(lama_sewa_list)
+            except ValueError:
+                lama_sewa = 1  # fallback default jika input tidak valid
+
+            # Hitung total dari subtotal tiap produk
+            total = sum(
+                int(qty) * float(harga) * lama_sewa
+                for qty, harga in zip(qty_list, harga_list)
+            )
+
+            # Update transaksi utama
+            cursor.execute("""
+                UPDATE transactions
+                SET customer_id=%s, user_id=%s, no_nota=%s, tanggal_nota=%s,
+                    tanggal_sewa=%s, tanggal_kembali=%s, lama_sewa=%s,
+                    status_pembayaran=%s, jaminan=%s, note=%s, total=%s
+                WHERE transaction_id=%s
+            """, (
+                customer_id, user_id, no_nota, tanggal_nota,
+                tanggal_sewa, tanggal_kembali, lama_sewa,
+                status_pembayaran, jaminan, note, total, transaction_id
+            ))
+
+            # Hapus detail lama
+            cursor.execute("DELETE FROM transaction_details WHERE transaction_id = %s", (transaction_id,))
+
+            # Simpan ke tabel transaction_details
+            product_ids = request.form.getlist("product_id[]")
+            for product_id, qty, harga in zip(product_ids, qty_list, harga_list):
+                cursor.execute("""
+                    INSERT INTO transaction_details (transaction_id, product_id, qty, harga_sewa)
+                    VALUES (%s, %s, %s, %s)
+                """, (transaction_id, product_id, qty, harga))
+
+            conn.commit()
+            conn.close()
+            
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'status': 'success', 'message': 'Transaksi berhasil diperbarui.'})
+            else:
+                flash("Transaksi berhasil diperbarui.", "success")
+                return redirect(url_for('detail_transaksi', transaction_id=transaction_id))
+
+        except Exception as e:
+            conn.rollback()
+            print(f"[ERROR] Gagal memperbarui transaksi: {e}")
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'status': 'error', 'message': 'Terjadi kesalahan saat menyimpan perubahan.'}), 500
+            else:
+                flash("Terjadi kesalahan saat menyimpan perubahan.", "danger")
+                abort(500)
+
+        finally:
+            cursor.close()
+            conn.close()
+
+    # === GET METHOD ===
+    try:
+        # Ambil data transaksi
+        cursor.execute("""
+            SELECT t.*,
+                       u.name as user_name,
+                       c.name as customer_name
+                        FROM transactions t 
+            JOIN customers c ON t.customer_id = c.customer_id
+            JOIN users u ON t.user_id = u.user_id
+            WHERE t.transaction_id = %s
+        """, (transaction_id,))
+        transaction = cursor.fetchone()
+        if not transaction:
+            abort(404)
+
+        # Ambil detail produk
+        cursor.execute("""
+            SELECT td.*, p.name as product_name, p.qty as product_qty, p.harga_sewa,
+                       t.lama_sewa
+            FROM transaction_details td
+            JOIN products p ON td.product_id = p.product_id
+            JOIN transactions t ON td.transaction_id = t.transaction_id
+            WHERE td.transaction_id = %s
+        """, (transaction_id,))
+        product_details = cursor.fetchall()
+
+        # Ambil semua produk (opsional, jika ingin user bisa ganti produk)
+        cursor.execute("SELECT product_id, name FROM products")
+        all_products = cursor.fetchall()
+
+        # Ambil semua customer (untuk dropdown)
+        cursor.execute("SELECT customer_id, name FROM customers")
+        customers = cursor.fetchall()
+
+        return render_template('transactions/edit_transaksi.html',
+                               transaction=transaction,
+                               product_details=product_details,
+                               all_products=all_products,
+                               customers=customers,
+                               user=current_user)
+
+    except Exception as e:
+        print(f"[ERROR]: {e}")
+        traceback.print_exc()
+        abort(500)
 
 
 
