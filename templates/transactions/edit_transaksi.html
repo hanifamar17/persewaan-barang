@@ -676,6 +676,7 @@
         displayedProducts = products;
 
         products.forEach((product, index) => {
+
             const clone = template.cloneNode(true);
             clone.classList.add('fade-in');
 
@@ -711,17 +712,25 @@
 
     // Event delegation untuk tombol add
     document.addEventListener('click', function (e) {
-        if (e.target && e.target.classList.contains('add-btn')) {
-            const index = e.target.getAttribute('data-index');
+        // Tombol Tambah Produk
+        if (e.target.closest('.add-btn')) {
+            const btn = e.target.closest('.add-btn');
+            const index = btn.getAttribute('data-index');
             const product = displayedProducts[index];
+
+            console.log("INDEX:", index, "PRODUCT:", product);
+
             if (product) {
                 addToSewaList(product);
+            } else {
+                alert("Produk tidak ditemukan. Coba muat ulang daftar produk.");
             }
         }
 
-        // Event delegation untuk tombol remove
-        if (e.target && e.target.classList.contains('remove-btn')) {
-            const productId = e.target.getAttribute('data-product-id');
+        // Tombol Hapus Produk
+        if (e.target.closest('.remove-btn')) {
+            const btn = e.target.closest('.remove-btn');
+            const productId = btn.getAttribute('data-product-id');
             removeFromSewaList(productId);
         }
     });
@@ -729,11 +738,11 @@
     // Fungsi untuk menambahkan produk ke daftar sewa
     function addToSewaList(product, isOld = false) {
         // Cek jika produk sudah ada di list
-        const existingItem = sewaItems.find(item => item.product_id === product.product_id);
-        if (existingItem) {
-            showError('Produk sudah ada dalam daftar sewa');
-            return;
-        }
+        //const existingItem = sewaItems.find(item => item.product_id === product.product_id);
+        //if (existingItem) {
+        //    showError('Produk sudah ada dalam daftar sewa');
+        //    return;
+        //}
 
         const tbody = document.getElementById('sewaList');
         const emptyRow = document.getElementById('emptyRow');
@@ -752,7 +761,9 @@
         const oneDay = 24 * 60 * 60 * 1000;
         const lamaSewa = isOld ? product.lama_sewa : Math.max(Math.round((tanggalKembali - tanggalSewa) / oneDay), 1); // minimal 1 hari
 
-        const qty = isOld ? product.qty : 1;
+        const qty = isOld ? product.product_qty : 1;
+        const stock = product.stock ?? product.qty ?? 0; // fallback jika stock tidak tersedia
+        //const product_qty = isOld ? product.product_qty : 1;
         const subtotal = product.harga_sewa * lamaSewa * qty;
 
         row.innerHTML = `
@@ -762,7 +773,7 @@
                       <i class="fas fa-box text-blue-600 text-sm"></i>
                   </div>
                   <div>
-                      <p class="font-medium text-gray-900">${product.product_name}</p>
+                      <p class="font-medium text-gray-900">${product.name}</p>
                       <p class="text-xs text-gray-500">Kode: ${product.product_id}</p>
                       <input type="hidden" name="product_id[]" value="${product.product_id}">
                   </div>
@@ -775,22 +786,22 @@
           <td class="px-6 py-4">
               <input type="number" 
                      name="qty[]" 
-                     value="${product.qty}" 
+                     value="${qty}" 
                      min="1" 
-                     max="${product.product_qty}" 
+                     max="${stock}" 
                      data-product-id="${product.product_id}"
                      data-price="${product.harga_sewa}"
-                     data-lama-sewa="${product.lama_sewa}"
+                     data-lama-sewa="${lamaSewa}"
                      class="qty-input w-20 border border-gray-300 rounded-md px-2 py-1 text-center focus:outline-none focus:ring-2 focus:ring-blue-500">
-              <p class="text-xs text-gray-500 mt-1">Max: ${product.product_qty}</p>
+              <p class="text-xs text-gray-500 mt-1">Max: ${stock}</p>
           </td>
           <td class="px-6 py-4">
-              <span class="lama-sewa font-medium text-gray-900">${product.lama_sewa} hari</span>
-              <input type="hidden" name="lama_sewa[]" value="${product.lama_sewa}">
+              <span class="lama-sewa font-medium text-gray-900">${lamaSewa} hari</span>
+              <input type="hidden" name="lama_sewa[]" value="${lamaSewa}">
           </td>
           <td class="px-6 py-4">
               <span class="subtotal font-semibold text-gray-900" data-product-id="${product.product_id}">
-                  ${formatCurrency(product.harga_sewa * product.qty * product.lama_sewa)}
+                  ${formatCurrency(product.harga_sewa * qty * lamaSewa)}
               </span>
           </td>
           <td class="px-6 py-4">

@@ -574,7 +574,7 @@ def search_products():
                     WHEN t.status_pengembalian = 'belum' 
                     AND t.tanggal_sewa < %s 
                     AND t.tanggal_kembali > %s 
-                    THEN td.qty 
+                    THEN td.product_qty 
                     ELSE 0 
                 END
             ), 0) as qty_disewa
@@ -661,7 +661,7 @@ def simpan_transaksi():
         product_ids = request.form.getlist("product_id[]")
         for product_id, qty, harga in zip(product_ids, qty_list, harga_list):
             cursor.execute("""
-                INSERT INTO transaction_details (transaction_id, product_id, qty, harga_sewa)
+                INSERT INTO transaction_details (transaction_id, product_id, product_qty, harga_sewa)
                 VALUES (%s, %s, %s, %s)
             """, (transaction_id, product_id, qty, harga))
 
@@ -745,8 +745,8 @@ def detail_transaksi(transaction_id):
         # Ambil detail produk
         cursor.execute("""
             SELECT 
-                td.qty, td.harga_sewa, p.name AS product_name, t.lama_sewa, p.product_id,
-                (td.qty * td.harga_sewa * t.lama_sewa) AS subtotal
+                td.product_qty, td.harga_sewa, p.name AS product_name, t.lama_sewa, p.product_id,
+                (td.product_qty * td.harga_sewa * t.lama_sewa) AS subtotal
             FROM transaction_details td
             JOIN products p ON td.product_id = p.product_id
             JOIN transactions t ON td.transaction_id = t.transaction_id
@@ -846,7 +846,7 @@ def edit_transaksi(transaction_id):
             product_ids = request.form.getlist("product_id[]")
             for product_id, qty, harga in zip(product_ids, qty_list, harga_list):
                 cursor.execute("""
-                    INSERT INTO transaction_details (transaction_id, product_id, qty, harga_sewa)
+                    INSERT INTO transaction_details (transaction_id, product_id, product_qty, harga_sewa)
                     VALUES (%s, %s, %s, %s)
                 """, (transaction_id, product_id, qty, harga))
 
@@ -890,7 +890,7 @@ def edit_transaksi(transaction_id):
 
         # Ambil detail produk
         cursor.execute("""
-            SELECT td.*, p.name as product_name, p.qty as product_qty, p.harga_sewa,
+            SELECT td.*, p.name, p.qty as stock, p.harga_sewa,
                        t.lama_sewa
             FROM transaction_details td
             JOIN products p ON td.product_id = p.product_id
@@ -900,7 +900,14 @@ def edit_transaksi(transaction_id):
         product_details = cursor.fetchall()
 
         # Ambil semua produk (opsional, jika ingin user bisa ganti produk)
-        cursor.execute("SELECT product_id, name FROM products")
+        cursor.execute("""
+            SELECT 
+                product_id, 
+                name, 
+                qty as stock, 
+                harga_sewa 
+            FROM products
+        """)
         all_products = cursor.fetchall()
 
         # Ambil semua customer (untuk dropdown)
@@ -918,6 +925,35 @@ def edit_transaksi(transaction_id):
         print(f"[ERROR]: {e}")
         traceback.print_exc()
         abort(500)
+
+#--- Route: Hapus transaksi --- 
+@app.route('/delete_transaksi/<int:transaction_id>', methods=['GET', 'POST'])
+#@login_required
+def delete_transaksi(transaction_id):
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        # Hapus detail transaksi terlebih dahulu
+        cursor.execute("DELETE FROM transaction_details WHERE transaction_id = %s", (transaction_id,))
+
+        # Hapus transaksi utama
+        cursor.execute("DELETE FROM transactions WHERE transaction_id = %s", (transaction_id,))
+
+        conn.commit()
+        flash("Transaksi berhasil dihapus.", "success")
+        return redirect(url_for('riwayat_transaksi'))  # ganti 'list_transaksi' sesuai nama route daftar transaksi
+
+    except Exception as e:
+        conn.rollback()
+        print(f"[ERROR] Gagal menghapus transaksi: {e}")
+        flash("Terjadi kesalahan saat menghapus transaksi.", "danger")
+        abort(500)
+
+    finally:
+        cursor.close()
+        conn.close()
+    
 
 
 
