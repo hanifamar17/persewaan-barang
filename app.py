@@ -669,7 +669,10 @@ def simpan_transaksi():
         conn.close()
 
         #return redirect(url_for("sewa"))
-        return jsonify({'status': 'success', 'message': 'Transaksi berhasil disimpan'})
+        return jsonify({
+            'status': 'success',
+            'message': 'Transaksi berhasil disimpan',
+            'redirect_url': url_for('detail_transaksi', transaction_id=transaction_id)})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -854,7 +857,10 @@ def edit_transaksi(transaction_id):
             conn.close()
             
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({'status': 'success', 'message': 'Transaksi berhasil diperbarui.'})
+                return jsonify({
+                    'status': 'success',
+                    'message': 'Transaksi berhasil diperbarui.',
+                    'redirect_url': url_for('detail_transaksi', transaction_id=transaction_id)})
             else:
                 flash("Transaksi berhasil diperbarui.", "success")
                 return redirect(url_for('detail_transaksi', transaction_id=transaction_id))

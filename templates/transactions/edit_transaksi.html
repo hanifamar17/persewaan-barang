@@ -464,13 +464,14 @@
 
                             <!-- Action Buttons -->
                             <div class="flex items-center justify-end gap-4 pt-6 border-t border-gray-100">
-                                <button type="submit"
-                                    class="inline-flex items-center gap-2 px-5 py-2 rounded-md bg-blue-600 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all duration-200">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4"
-                                            d="M5 13l4 4L19 7" />
+                                <button id="btnSimpan" type="submit"
+                                    class="inline-flex items-center gap-2 px-5 py-2 rounded-md bg-blue-600 text-white text-sm font-semibold shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transition-all duration-200 cursor-pointer">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                     </svg>
-                                    Simpan Transaksi
+                                    <span class="btn-text">Perbarui Transaksi</span>
                                 </button>
                             </div>
                         </div>
@@ -613,12 +614,20 @@
 
         // Validasi tanggal
         if (!tanggalSewa || !tanggalKembali) {
-            showError('Tanggal sewa dan kembali harus diisi');
+            Toast.fire({
+                icon: 'warning',
+                title: 'Tanggal belum dipilih',
+                text: 'Silakan pilih tanggal sewa dan kembali terlebih dahulu.'
+            });
             return;
         }
 
         if (new Date(tanggalSewa) >= new Date(tanggalKembali)) {
-            showError('Tanggal kembali harus setelah tanggal sewa');
+            Toast.fire({
+                icon: 'warning',
+                title: 'Tanggal tidak valid',
+                text: 'Tanggal kembali harus setelah tanggal sewa.'
+            });
             return;
         }
 
@@ -737,15 +746,50 @@
 
     // Fungsi untuk menambahkan produk ke daftar sewa
     function addToSewaList(product, isOld = false) {
-        // Cek jika produk sudah ada di list
-        //const existingItem = sewaItems.find(item => item.product_id === product.product_id);
-        //if (existingItem) {
-        //    showError('Produk sudah ada dalam daftar sewa');
-        //    return;
-        //}
-
         const tbody = document.getElementById('sewaList');
         const emptyRow = document.getElementById('emptyRow');
+
+        const tanggalSewa = new Date(document.getElementById('tanggalSewa').value);
+        const tanggalKembali = new Date(document.getElementById('tanggalKembali').value);
+        const oneDay = 24 * 60 * 60 * 1000;
+
+        // Validasi tanggal
+        if (isNaN(tanggalSewa) || isNaN(tanggalKembali)) {
+            Toast.fire({
+                icon: 'warning',
+                title: 'Tanggal belum dipilih',
+                text: 'Silakan pilih tanggal sewa dan kembali terlebih dahulu.'
+            });
+            return;
+        }
+
+        const lamaSewa = isOld ? product.lama_sewa : Math.max(Math.round((tanggalKembali - tanggalSewa) / oneDay), 1); // minimal 1 hari
+        const qty = isOld ? product.product_qty : 1;
+        const stock = product.stock ?? product.qty ?? 0; // fallback jika stock tidak tersedia
+        const subtotal = product.harga_sewa * lamaSewa * qty;
+
+        // Cek jika produk sudah ada
+        const existingItem = sewaItems.find(item => item.product_id === product.product_id);
+        if (existingItem) {
+            Toast.fire({
+                icon: 'warning',
+                title: 'Produk sudah ada dalam daftar sewa'
+            });
+            return;
+        }
+
+        // Cek jika lama sewa tidak sama
+        if (sewaItems.length > 0) {
+            const existingLamaSewa = sewaItems[0].lama_sewa;
+            if (lamaSewa !== existingLamaSewa) {
+                Toast.fire({
+                    icon: 'error',
+                    title: 'Lama sewa tidak sesuai',
+                    text: 'Semua produk dalam satu transaksi harus memiliki lama sewa yang sama.'
+                });
+                return;
+            }
+        }
 
         // Hide empty row if exists
         if (emptyRow) {
@@ -755,16 +799,6 @@
         const row = document.createElement('tr');
         row.className = 'odd:bg-white even:bg-gray-50 hover:bg-gray-100 text-sm transition-colors duration-200';
         row.id = `row-${product.product_id}`;
-
-        const tanggalSewa = new Date(document.getElementById('tanggalSewa').value);
-        const tanggalKembali = new Date(document.getElementById('tanggalKembali').value);
-        const oneDay = 24 * 60 * 60 * 1000;
-        const lamaSewa = isOld ? product.lama_sewa : Math.max(Math.round((tanggalKembali - tanggalSewa) / oneDay), 1); // minimal 1 hari
-
-        const qty = isOld ? product.product_qty : 1;
-        const stock = product.stock ?? product.qty ?? 0; // fallback jika stock tidak tersedia
-        //const product_qty = isOld ? product.product_qty : 1;
-        const subtotal = product.harga_sewa * lamaSewa * qty;
 
         row.innerHTML = `
           <td class="px-6 py-4">
@@ -821,7 +855,12 @@
         });
 
         updateTotal();
-        showSuccessMessage(`${product.name} berhasil ditambahkan ke keranjang`);
+        if (!isOld) {
+            Toast.fire({
+                icon: 'success',
+                title: `${product.name} berhasil ditambahkan ke keranjang`
+            });
+        }
     }
     window.addEventListener('DOMContentLoaded', () => {
         if (Array.isArray(oldData)) {
@@ -937,7 +976,11 @@
     document.getElementById('tanggalKembali').addEventListener('change', function () {
         const tanggalSewa = document.getElementById('tanggalSewa');
         if (this.value && tanggalSewa.value && new Date(this.value) <= new Date(tanggalSewa.value)) {
-            showError('Tanggal kembali harus setelah tanggal sewa');
+            Toast.fire({
+                icon: 'warning',
+                title: 'Tanggal Kembali tidak valid',
+                text: 'Tanggal kembali harus setelah tanggal sewa.'
+            });
             this.value = '';
         }
     });
@@ -976,11 +1019,37 @@
 </script>
 <script>
     const simpanTransaksiForm = document.querySelector('#formSimpanTransaksi');
+    const btnSimpan = document.querySelector('#btnSimpan');
+
+    function setButtonLoadingState(isLoading) {
+        if (!btnSimpan) return;
+
+        btnSimpan.disabled = isLoading;
+        btnSimpan.classList.toggle('opacity-70', isLoading);
+        btnSimpan.classList.toggle('cursor-not-allowed', isLoading);
+
+        const iconCheck = btnSimpan.querySelector('.icon-check');
+        const iconSpinner = btnSimpan.querySelector('.icon-spinner');
+        const btnText = btnSimpan.querySelector('.btn-text');
+
+        if (isLoading) {
+            iconCheck?.classList.add('hidden');
+            iconSpinner?.classList.remove('hidden');
+            if (btnText) btnText.textContent = 'Menyimpan...';
+        } else {
+            iconCheck?.classList.remove('hidden');
+            iconSpinner?.classList.add('hidden');
+            if (btnText) btnText.textContent = 'Perbarui Transaksi';
+        }
+    }
+
     if (simpanTransaksiForm) {
         simpanTransaksiForm.addEventListener('submit', function (e) {
             e.preventDefault(); // ⛔ cegah reload
 
             const formData = new FormData(this);
+
+            setButtonLoadingState(true);
 
             fetch(`/transaksi/edit/${transactionId}`, {
                 method: 'POST',
@@ -996,13 +1065,18 @@
                             icon: 'success',
                             title: data.message
                         }).then(() => {
-                            location.reload();
+                            if (data.redirect_url) {
+                                window.location.href = data.redirect_url; // redirect ke halaman detail
+                            } else {
+                                location.reload(); // fallback
+                            }
                         });
                     } else {
                         Toast.fire({
                             icon: 'error',
                             title: data.message || 'Gagal menyimpan transaksi'
                         });
+                        setButtonLoadingState(false);
                     }
                 })
                 .catch(error => {
@@ -1011,6 +1085,7 @@
                         icon: 'error',
                         title: 'Terjadi kesalahan pada server'
                     });
+                    setButtonLoadingState(false);
                 });
         });
     }
