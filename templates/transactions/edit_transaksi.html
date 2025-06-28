@@ -44,7 +44,7 @@
         }
     }
 </style>
-<section class="w-full p-8 bg-white rounded shadow">
+<section class="w-full p-10 bg-white rounded shadow">
     <div class="text-center md:text-left space-y-2 mb-8">
         <h1 class="text-xl font-semibold text-gray-800">Edit Transaksi Sewa</h1>
         <p class="text-gray-600 text-sm">Cari produk dan masukkan ke list sewa</p>
@@ -453,10 +453,35 @@
                                     <div class="relative">
                                         <select id="status_pembayaran" name="status_pembayaran" required
                                             class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5">
-                                            <option value="{{transaction.status_pembayaran}}">
-                                                {{transaction.status_pembayaran}}</option>
-                                            <option value="belum lunas">Belum Lunas</option>
-                                            <option value="lunas">Lunas</option>
+                                            <option value="belum lunas" {{ 'selected' if
+                                                transaction.status_pembayaran=='belum lunas' else '' }}>
+                                                Belum Lunas
+                                            </option>
+                                            <option value="lunas" {{ 'selected' if
+                                                transaction.status_pembayaran=='lunas' else '' }}>
+                                                Lunas
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Status pengembalian -->
+                                <div class="space-y-2">
+                                    <label for="status_pengembalian" class="block text-sm font-medium text-gray-700">
+                                        Status Pengembalian
+                                        <span class="text-red-500 ml-1">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <select id="status_pengembalian" name="status_pengembalian" required
+                                            class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200 block w-full p-2.5">
+                                            <option value="belum" {{ 'selected' if
+                                                transaction.status_pengembalian=='belum' else '' }}>
+                                                Belum Kembali
+                                            </option>
+                                            <option value="kembali" {{ 'selected' if
+                                                transaction.status_pengembalian=='kembali' else '' }}>
+                                                Dikembalikan
+                                            </option>
                                         </select>
                                     </div>
                                 </div>

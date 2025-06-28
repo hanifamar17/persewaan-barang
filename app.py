@@ -801,6 +801,7 @@ def edit_transaksi(transaction_id):
             jaminan = request.form.get("jaminan", "-")
             note = request.form.get("note", "-")
             status_pembayaran = request.form.get("status_pembayaran")
+            status_penegembalian = request.form.get("status_pengembalian")
 
             # Cari customer_id, atau buat baru jika tidak ada
             cursor.execute("SELECT customer_id FROM customers WHERE name = %s", (customer_name,))
@@ -834,12 +835,12 @@ def edit_transaksi(transaction_id):
                 UPDATE transactions
                 SET customer_id=%s, user_id=%s, no_nota=%s, tanggal_nota=%s,
                     tanggal_sewa=%s, tanggal_kembali=%s, lama_sewa=%s,
-                    status_pembayaran=%s, jaminan=%s, note=%s, total=%s
+                    status_pembayaran=%s, status_pengembalian=%s, jaminan=%s, note=%s, total=%s
                 WHERE transaction_id=%s
             """, (
                 customer_id, user_id, no_nota, tanggal_nota,
                 tanggal_sewa, tanggal_kembali, lama_sewa,
-                status_pembayaran, jaminan, note, total, transaction_id
+                status_pembayaran, status_penegembalian, jaminan, note, total, transaction_id
             ))
 
             # Hapus detail lama

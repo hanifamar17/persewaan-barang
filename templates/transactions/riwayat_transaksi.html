@@ -2,36 +2,37 @@
 
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<section class="w-full p-8 bg-white rounded shadow">
-    <div class="text-center md:text-left space-y-2 mb-8">
-        <h1 class="text-xl font-semibold text-gray-800">Riwayat Transaksi Sewa</h1>
-        <p class="text-gray-600 text-sm">Lihat transaksi sewa</p>
+<section class="w-full p-10 bg-white rounded shadow">
+    <div class="flex items-start justify-between mb-6">
+        <div class="text-left space-y-2 mb-8">
+            <h1 class="text-xl font-semibold text-gray-800">Riwayat Transaksi Sewa</h1>
+            <p class="text-gray-600 text-sm">Lihat transaksi sewa</p>
+        </div>
+        <!-- Filter Card -->
+        <form method="get" class="flex items-center gap-3">
+            <div class="relative">
+                <i
+                    class="fas fa-calendar-alt absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="date" name="start_date" id="start_date_v3" value=""
+                    class="pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-36"
+                    title="Dari Tanggal">
+            </div>
+            <span class="text-gray-400 text-sm">-</span>
+            <div class="relative">
+                <i
+                    class="fas fa-calendar-check absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="date" name="end_date" id="end_date_v3" value=""
+                    class="pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-36"
+                    title="Sampai Tanggal">
+            </div>
+            <button type="submit"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center gap-1">
+                <i class="fas fa-filter text-xs"></i>
+                Filter
+            </button>
+        </form>
     </div>
 
-    <!-- Filter Card -->
-    <form method="get" class="flex items-center gap-4 mb-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="space-y-2">
-                <label for="start_date" class="block text-sm font-medium text-gray-700">
-                    <i class="fas fa-calendar-alt mr-2 text-gray-400"></i>
-                    Dari Tanggal
-                </label>
-                <input type="date" name="start_date" id="start_date" value="{{ start_date or '' }}"
-                    class="w-full p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
-            </div>
-            <div class="space-y-2">
-                <label for="end_date" class="block text-sm font-medium text-gray-700">
-                    <i class="fas fa-calendar-check mr-2 text-gray-400"></i>
-                    Sampai Tanggal
-                </label>
-                <input type="date" name="end_date" id="end_date" value="{{ end_date or '' }}"
-                    class="w-full p-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200">
-            </div>
-        </div>
-        <div class="mt-6">
-            <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded">Filter</button>
-        </div>
-    </form>
 
     <div class="w-full">
         <table id="riwayat-transaksi-table" class="w-full text-sm divide-y divide-gray-200">
@@ -41,10 +42,13 @@
                     <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Nota</th>
                     <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pelanggan</th>
                     <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Sewa</th>
-                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Kembali</th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Kembali
+                    </th>
                     <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk</th>
-                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pembayaran</th>
-                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengembalian</th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pembayaran
+                    </th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pengembalian
+                    </th>
                     <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
                 </tr>
             </thead>
@@ -86,13 +90,13 @@
                         {% if t.status_pengembalian == 'kembali' %}
                         <span
                             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                <i class="fas fa-undo mr-1"></i>
+                            <i class="fas fa-check-circle mr-2"></i>
                             Dikembalikan
                         </span>
                         {% else %}
                         <span
                             class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                                <i class="fas fa-hourglass-half mr-1"></i>
+                            <i class="fas fa-hourglass-half mr-1"></i>
                             Belum Kembali
                         </span>
                         {% endif %}
