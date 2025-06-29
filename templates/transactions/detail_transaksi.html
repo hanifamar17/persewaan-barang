@@ -3,9 +3,15 @@
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <section class="w-full p-10 bg-white rounded shadow">
-    <div class="text-center md:text-left space-y-2 mb-8 border-b border-gray-100 pb-4">
-        <h1 class="text-xl font-semibold text-gray-800">Detail Riwayat Transaksi Sewa</h1>
-        <p class="text-gray-600 text-sm">{{ transaction.no_nota }}</p>
+    <div class="flex items-start justify-between mb-6">
+        <div class="text-left space-y-2 mb-8 border-b border-gray-100 pb-4">
+            <h1 class="text-xl font-semibold text-gray-800">Detail Riwayat Transaksi Sewa</h1>
+            <p class="text-gray-600 text-sm">{{ transaction.no_nota }}</p>
+        </div>
+        <a href="{{ url_for('cetak_nota', transaction_id=transaction.transaction_id) }}" target="_blank"
+            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition">
+            🧾 Cetak Nota
+        </a>
     </div>
 
     <div class="mb-8 space-y-12">

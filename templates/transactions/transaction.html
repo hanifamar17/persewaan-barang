@@ -782,6 +782,19 @@
         const qty = 1;
         const subtotal = product.harga_sewa * lamaSewa * qty;
 
+        // Validasi konsistensi lama sewa
+        if (sewaItems.length > 0) {
+            const previousLamaSewa = sewaItems[0].lama_sewa;
+            if (previousLamaSewa !== lamaSewa) {
+                Toast.fire({
+                    icon: 'warning',
+                    title: 'Lama sewa tidak sama',
+                    text: 'Semua produk dalam keranjang harus memiliki lama sewa yang sama.'
+                });
+                return;
+            }
+        }
+
         // Cek jika produk sudah ada
         const existingItem = sewaItems.find(item => item.product_id === product.product_id);
         if (existingItem) {
@@ -790,19 +803,6 @@
                 title: 'Produk sudah ada dalam daftar sewa'
             });
             return;
-        }
-
-        // Cek jika lama sewa tidak sama
-        if (sewaItems.length > 0) {
-            const existingLamaSewa = sewaItems[0].lama_sewa;
-            if (lamaSewa !== existingLamaSewa) {
-                Toast.fire({
-                    icon: 'error',
-                    title: 'Lama sewa tidak sesuai',
-                    text: 'Semua produk dalam satu transaksi harus memiliki lama sewa yang sama.'
-                });
-                return;
-            }
         }
 
         // Hide empty row if exists
@@ -865,7 +865,8 @@
         // Add to sewaItems array
         sewaItems.push({
             ...product,
-            quantity: 1
+            quantity: 1,
+            lama_sewa: lamaSewa,
         });
 
         updateTotal();

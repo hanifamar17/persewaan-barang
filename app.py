@@ -1,4 +1,5 @@
-from flask import Flask, request, redirect, url_for, render_template, flash, jsonify, abort
+import tempfile
+from flask import Flask, request, redirect, send_file, url_for, render_template, flash, jsonify, abort
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import User
 from db import get_db_connection
@@ -8,7 +9,8 @@ import uuid
 from flask_wtf.csrf import CSRFProtect, CSRFError
 from datetime import datetime, date
 import traceback
-
+import pdfkit
+import base64
 
 
 app = Flask(__name__)
@@ -21,6 +23,10 @@ login_manager = LoginManager()
 login_manager.login_view = 'login'
 login_manager.init_app(app)
 
+# PDFKit configuration using wkhtmltopdf
+WKHTMLTOPDF_PATH= r'E:\\App-Development\\1-Tools-Library-Environment\\wkhtmltopdf\\bin\\wkhtmltopdf.exe'
+pdfkit_config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
+
 ## OTHERS
 #--- Format rupiah --- 
 @app.template_filter('format_rupiah')
@@ -30,6 +36,30 @@ def format_rupiah(amount):
         return f"Rp{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
     except (ValueError, TypeError):
         return amount 
+
+# --- Format tanggal Indonesia ---
+def format_tanggal_indonesia(tanggal):
+    bulan_id = {
+        'January': 'Januari',
+        'February': 'Februari',
+        'March': 'Maret',
+        'April': 'April',
+        'May': 'Mei',
+        'June': 'Juni',
+        'July': 'Juli',
+        'August': 'Agustus',
+        'September': 'September',
+        'October': 'Oktober',
+        'November': 'November',
+        'December': 'Desember'
+    }
+    if isinstance(tanggal, str):
+        tanggal = datetime.strptime(tanggal, "%Y-%m-%d")  # Sesuaikan format aslinya
+
+    bulan = bulan_id[tanggal.strftime("%B")]
+    return f"{tanggal.day} {bulan} {tanggal.year}"
+
+app.jinja_env.filters['tanggal_id'] = format_tanggal_indonesia
 
 # --- Load user by ID for session ---
 @login_manager.user_loader
@@ -962,7 +992,67 @@ def delete_transaksi(transaction_id):
         conn.close()
     
 
+with open("static/img/logo.png", "rb") as image_file:
+    logo_base64 = base64.b64encode(image_file.read()).decode("utf-8")
 
+@app.route("/cetak-nota/<int:transaction_id>")
+def cetak_nota(transaction_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Ambil transaksi + customer + user
+        cursor.execute("""
+            SELECT t.*, 
+                   c.name AS customer_name, c.phone_number AS customer_phone, c.address AS customer_address,
+                   u.name AS user_name
+            FROM transactions t
+            JOIN customers c ON t.customer_id = c.customer_id
+            JOIN users u ON t.user_id = u.user_id
+            WHERE t.transaction_id = %s
+        """, (transaction_id,))
+        transaction = cursor.fetchone()
+
+        if not transaction:
+            abort(404, "Transaksi tidak ditemukan.")
+
+        # Ambil detail produk
+        cursor.execute("""
+            SELECT td.product_qty AS qty, td.harga_sewa AS harga, p.name, t.lama_sewa
+            FROM transaction_details td
+            JOIN products p ON td.product_id = p.product_id
+            JOIN transactions t ON td.transaction_id = t.transaction_id
+            WHERE td.transaction_id = %s
+        """, (transaction_id,))
+        details = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        # Render HTML
+        rendered = render_template("transactions/nota.html", data={
+            'transaction': transaction,
+            'details': details,
+        }, now=datetime.now(), logo_base64=logo_base64)
+
+        # Buat PDF sementara
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as pdf_file:
+            options = {
+                'page-size': 'B5',
+                'margin-top': '10mm',
+                'margin-right': '10mm',
+                'margin-bottom': '10mm',
+                'margin-left': '10mm',
+                'encoding': "UTF-8",
+            }
+            pdfkit.from_string(rendered, pdf_file.name, configuration=pdfkit_config, options=options)
+
+            pdf_file_path = pdf_file.name
+
+        return send_file(pdf_file_path, mimetype='application/pdf')
+
+    except Exception as e:
+        return f"Terjadi kesalahan: {str(e)}", 500
 
 if __name__ == '__main__':
     app.run(debug=True)

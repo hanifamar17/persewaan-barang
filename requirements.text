@@ -2,3 +2,4 @@ flask
 mysql-connector
 flask-login
 flask_wtf
+pdfkit

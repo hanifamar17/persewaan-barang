@@ -1,222 +1,340 @@
-<div class="max-w-4xl mx-auto space-y-6">
-        
-        <!-- Header Info -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex justify-between items-start mb-4">
-                <div>
-                    <h2 class="text-xl font-semibold text-gray-900">Ringkasan Transaksi</h2>
-                    <p class="text-sm text-gray-600 mt-1">Periksa kembali detail transaksi sebelum menyimpan</p>
-                </div>
-                <div class="text-right">
-                    <div class="text-sm text-gray-600">No. Nota</div>
-                    <div class="font-mono text-lg font-semibold text-gray-900">NT-2025001</div>
-                </div>
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nota Sewa</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 10px;
+            font-size: 10pt;
+            font-family: "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+            color: #1f2937;
+            /* Tailwind slate-800 */
+            line-height: 1.5;
+            background-color: #ffffff;
+        }
+
+        .header {
+            display: table;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin: 0;
+            letter-spacing: 2px;
+        }
+
+        .info-row {
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .info-row:after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+
+        .info-col {
+            float: left;
+            width: 48%;
+            margin-right: 4%;
+        }
+
+        .info-col:last-child {
+            margin-right: 0;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #494848;
+            margin-bottom: 5px;
+            padding-top: 10px;
+        }
+
+
+        .info-item {
+            margin-bottom: 4px;
+            overflow: hidden;
+        }
+
+        .info-label {
+            float: left;
+            width: 80px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .info-value {
+            font-size: 14px;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        thead th {
+            padding: 8px 12px;
+            font-weight: bold;
+            color: #4B5563;
+            background-color: #fffdec;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        tbody td {
+            padding: 4px 12px;
+            border-bottom: 0.5px solid #dee2e6;
+        }
+
+        tbody tr:hover {
+            background-color: #e8f0fe;
+        }
+
+        .row-even {
+            background-color: #ffffff;
+            /* abu-abu terang - mirip Tailwind slate-100 */
+        }
+
+        .row-odd {
+            background-color: #f9fafb;
+            /* putih */
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        /* Summary Table */
+        .summary-table {
+            width: 50%;
+            float: right;
+        }
+
+        /* Utility Classes */
+        .bold {
+            font-weight: bold;
+        }
+
+        .currency {
+            font-family: 'Courier New', monospace;
+        }
+
+        .even-row {
+            background-color: #F9FAFB;
+        }
+
+        .page_number {
+            text-align: right;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            font-size: 9px;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* Footer */
+        .footer {
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 10pt;
+            color: #666;
+        }
+
+        .footer-content1 {
+            padding-top: 40px;
+            margin-bottom: 4px;
+        }
+
+        .footer p {
+            margin: 0;
+            /* hilangkan margin bawaan */
+            line-height: 1.4;
+            /* atur tinggi baris */
+        }
+
+        .notes-section {
+            margin-top: 15px;
+            padding: 12px 16px;
+            background-color: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            font-size: 10pt;
+            line-height: 1.4;
+            color: #374151;
+            clear: both;
+        }
+
+        .notes-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .notes-content {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.3;
+        }
+
+        .col-width-50 {
+            width: 50%;
+        }
+
+        .col-width-15 {
+            width: 15%;
+        }
+
+        .col-width-20 {
+            width: 20%;
+        }
+    </style>
+</head>
+
+<body>
+
+    <table style="width: 100%; border-bottom: 1px solid #bfc3c9; margin-bottom: 20px;">
+        <tr>
+            <td style="width: 5px; vertical-align: middle;">
+                <img src="data:image/png;base64,{{ logo_base64 }}" alt="Logo" style="height: 30px;">
+            </td>
+            <td style="vertical-align: middle;">
+                <span style="font-size: 24px; text-transform: uppercase; color: #474646;">Nota
+                    Transaksi</span>
+            </td>
+        </tr>
+    </table>
+
+    <div class="info-row">
+        <div class="info-col">
+            <div class="info-item">
+                <div class="info-label">No Nota</div>
+                <div class="info-value">: {{ data.transaction.no_nota }}</div>
             </div>
-            
-            <!-- Transaction Info Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
-                <div>
-                    <div class="text-gray-600">Customer</div>
-                    <div class="font-medium text-gray-900">Ahmad Rizki</div>
-                </div>
-                <div>
-                    <div class="text-gray-600">Tanggal Sewa</div>
-                    <div class="font-medium text-gray-900">18 Jun 2025</div>
-                </div>
-                <div>
-                    <div class="text-gray-600">Tanggal Kembali</div>
-                    <div class="font-medium text-gray-900">20 Jun 2025</div>
-                </div>
-                <div>
-                    <div class="text-gray-600">Durasi Sewa</div>
-                    <div class="font-medium text-gray-900">3 Hari</div>
-                </div>
+            <div class="info-item">
+                <div class="info-label">Tgl Nota</div>
+                <div class="info-value">: {{ data.transaction.tanggal_nota|tanggal_id }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Petugas</div>
+                <div class="info-value">: {{ data.transaction.user_name }}</div>
             </div>
         </div>
 
-        <!-- Product List -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Daftar Produk</h3>
+        <div class="info-col">
+            <div class="info-item">
+                <div class="info-label">Tgl Sewa</div>
+                <div class="info-value">: {{ data.transaction.tanggal_sewa|tanggal_id }}</div>
             </div>
-            
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Produk
-                            </th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Jumlah
-                            </th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Harga/Hari
-                            </th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Durasi
-                            </th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Subtotal
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr>
-                            <td class="px-6 py-4">
-                                <div class="font-medium text-gray-900">Tenda Dome 4 Orang</div>
-                                <div class="text-sm text-gray-500">SKU: TD-001</div>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                    2 unit
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-right font-medium text-gray-900">
-                                Rp 50.000
-                            </td>
-                            <td class="px-6 py-4 text-right text-gray-600">
-                                3 hari
-                            </td>
-                            <td class="px-6 py-4 text-right font-semibold text-gray-900">
-                                Rp 300.000
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4">
-                                <div class="font-medium text-gray-900">Sleeping Bag</div>
-                                <div class="text-sm text-gray-500">SKU: SB-002</div>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                    4 unit
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-right font-medium text-gray-900">
-                                Rp 25.000
-                            </td>
-                            <td class="px-6 py-4 text-right text-gray-600">
-                                3 hari
-                            </td>
-                            <td class="px-6 py-4 text-right font-semibold text-gray-900">
-                                Rp 300.000
-                            </td>
-                        </tr>
-                        <tr>
-                            <td class="px-6 py-4">
-                                <div class="font-medium text-gray-900">Kompor Portable</div>
-                                <div class="text-sm text-gray-500">SKU: KP-003</div>
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                    1 unit
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-right font-medium text-gray-900">
-                                Rp 35.000
-                            </td>
-                            <td class="px-6 py-4 text-right text-gray-600">
-                                3 hari
-                            </td>
-                            <td class="px-6 py-4 text-right font-semibold text-gray-900">
-                                Rp 105.000
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="info-item">
+                <div class="info-label">Tgl Kembali</div>
+                <div class="info-value">: {{ data.transaction.tanggal_kembali|tanggal_id }}</div>
             </div>
-        </div>
-
-        <!-- Summary & Payment -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            <!-- Payment Summary -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Ringkasan Pembayaran</h3>
-                
-                <div class="space-y-3">
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-600">Subtotal</span>
-                        <span class="font-medium text-gray-900">Rp 705.000</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-600">Deposit (20%)</span>
-                        <span class="font-medium text-gray-900">Rp 141.000</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="text-gray-600">Biaya Admin</span>
-                        <span class="font-medium text-gray-900">Rp 5.000</span>
-                    </div>
-                    <div class="border-t border-gray-200 pt-3">
-                        <div class="flex justify-between">
-                            <span class="text-base font-medium text-gray-900">Total</span>
-                            <span class="text-xl font-bold text-gray-900">Rp 710.000</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Payment Status -->
-                <div class="mt-4 pt-4 border-t border-gray-200">
-                    <div class="flex items-center justify-between">
-                        <span class="text-sm text-gray-600">Status Pembayaran</span>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-                            Belum Lunas
-                        </span>
-                    </div>
-                    <div class="flex items-center justify-between mt-2">
-                        <span class="text-sm text-gray-600">Sisa Pembayaran</span>
-                        <span class="font-semibold text-red-600">Rp 569.000</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Additional Info -->
-            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">Informasi Tambahan</h3>
-                
-                <div class="space-y-4">
-                    <div>
-                        <div class="text-sm text-gray-600 mb-1">Operator</div>
-                        <div class="font-medium text-gray-900">Admin User</div>
-                    </div>
-                    
-                    <div>
-                        <div class="text-sm text-gray-600 mb-1">Tanggal Transaksi</div>
-                        <div class="font-medium text-gray-900">17 Jun 2025, 14:30</div>
-                    </div>
-                    
-                    <div>
-                        <div class="text-sm text-gray-600 mb-1">Catatan</div>
-                        <div class="text-sm text-gray-700 bg-gray-50 p-3 rounded-md">
-                            Pastikan semua equipment dalam kondisi baik saat pengembalian
-                        </div>
-                    </div>
-                    
-                    <!-- Important Reminders -->
-                    <div class="bg-amber-50 border border-amber-200 rounded-md p-3">
-                        <div class="text-sm font-medium text-amber-800 mb-1">Peringatan Penting:</div>
-                        <ul class="text-sm text-amber-700 space-y-1">
-                            <li>• Keterlambatan pengembalian dikenakan denda Rp 10.000/hari</li>
-                            <li>• Kerusakan equipment akan dipotong dari deposit</li>
-                            <li>• Hubungi kami jika ada perubahan jadwal</li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div class="flex flex-col sm:flex-row gap-3 sm:justify-end">
-                <button class="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-md hover:bg-gray-50 transition-colors duration-150">
-                    Edit Transaksi
-                </button>
-                <button class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition-colors duration-150">
-                    Konfirmasi & Simpan
-                </button>
-                <button class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white font-medium rounded-md transition-colors duration-150">
-                    Print Nota
-                </button>
+            <div class="info-item">
+                <div class="info-label">Lama Sewa</div>
+                <div class="info-value">: {{ data.transaction.lama_sewa }} hari</div>
             </div>
         </div>
     </div>
+
+    <div class="info-row">
+        <div class="info-col">
+            <div class="section-title">Pelanggan</div>
+            <div class="info-item">
+                <div class="info-value">{{ data.transaction.customer_name }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-value">{{ data.transaction.customer_phone }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-value">{{ data.transaction.customer_address }}</div>
+            </div>
+        </div>
+    </div>
+
+    <br>
+    <div class="table-section">
+        <table>
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Nama Produk</th>
+                    <th class="text-center">Qty</th>
+                    <th class="text-center">Lama Sewa</th>
+                    <th class="text-right">Harga</th>
+                    <th class="text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in data.details %}
+                <tr class="{% if loop.index0 % 2 == 0 %}row-even{% else %}row-odd{% endif %}">
+                    <td>{{ loop.index }}</td>
+                    <td>{{ item.name }}</td>
+                    <td class="text-center">{{ item.qty }}</td>
+                    <td class="text-center">{{ item.lama_sewa }} hari</td>
+                    <td class="text-right">Rp{{ "{:,.0f}".format(item.harga).replace(",", ".") }}</td>
+                    <td class="text-right">Rp{{ "{:,.0f}".format(item.qty * item.harga * item.lama_sewa).replace(",",
+                        ".") }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <table class="summary-table">
+            <tr style="background-color: #f9fafb;">
+                <td>Total Pembayaran</td>
+                <td class="text-right">Rp{{ "{:,.0f}".format(data.transaction.total or 0).replace(",", ".") }}</td>
+            </tr>
+            <tr>
+                <td>Status Pembayaran</td>
+                <td class="text-right">{{ data.transaction.status_pembayaran }}</td>
+            </tr>
+            <tr style="background-color: #f9fafb;">
+                <td>Jaminan</td>
+                <td class="text-right">{{ data.transaction.jaminan }}</td>
+            </tr>
+        </table>
+    </div>
+
+
+    <div class="notes-section">
+        <div class="notes-title">Catatan</div>
+        {% if data.transaction.note %}
+        <div class="notes-content">{{ data.transaction.note }}</div>
+        {% else %}
+        <div style="font-style: italic; color: #9d9fa1;">Tidak ada catatan untuk transaksi ini.</div>
+        {% endif %}
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p class="footer-content1">Terima kasih atas kepercayaan Anda.</p>
+        <p>Hubungi layanan pelanggan untuk informasi lebih lanjut.</p>
+        <p style="padding-top: 10px; font-style: italic;">Generated on: {{ now.strftime("%d %B %Y, %H:%M") }} (Western
+            Indonesia Time)</p>
+    </div>
+</body>
+
+</html>
