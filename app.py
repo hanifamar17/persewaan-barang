@@ -1105,5 +1105,84 @@ def cetak_nota(transaction_id):
     except Exception as e:
         return f"Terjadi kesalahan: {str(e)}", 500
 
+
+## MODULE LAPORAN
+#--- Route: Halaman laporan transaksi ---
+@app.route('/laporan', methods=['GET', 'POST'])
+#@login_required
+def laporan():
+    tanggal_dari = request.args.get('dari')
+    tanggal_sampai = request.args.get('sampai')
+    status_pembayaran = request.args.get('status_pembayaran') 
+    status_pengembalian = request.args.get('status_pengembalian')
+
+    data = []
+    ringkasan = {
+        "total_transaksi": 0,
+        "total_produk": 0,
+        "total_belum_lunas": 0,
+        "total_belum_kembali": 0,
+        "total_pendapatan": 0
+    }
+
+    if tanggal_dari and tanggal_sampai:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Ambil data transaksi dan detail produk
+        query = """
+            SELECT t.transaction_id, t.no_nota, t.tanggal_nota, t.tanggal_sewa, t.lama_sewa,
+                   t.tanggal_kembali, t.status_pembayaran, t.status_pengembalian, c.name AS customer_name,
+                   u.name AS user_name, p.name AS product_name, td.product_qty, p.harga_sewa,
+                   (td.product_qty * p.harga_sewa * t.lama_sewa) AS total_harga
+            FROM transactions t
+            JOIN users u ON t.user_id = u.user_id
+            JOIN customers c ON t.customer_id = c.customer_id
+            JOIN transaction_details td ON t.transaction_id = td.transaction_id
+            JOIN products p ON td.product_id = p.product_id
+            WHERE t.tanggal_nota BETWEEN %s AND %s 
+        """
+
+        params = [tanggal_dari, tanggal_sampai]
+
+        # Tambahkan filter status pembayaran
+        if status_pembayaran in ['lunas', 'belum']:
+            query += " AND t.status_pembayaran = %s"
+            status_pembayaran_val = 'lunas' if status_pembayaran == 'lunas' else 'belum lunas'
+            params.append(status_pembayaran_val)
+
+        # Tambahkan filter status pengembalian
+        if status_pengembalian in ['kembali', 'belum']:
+            query += " AND t.status_pengembalian = %s"
+            status_pengembalian_val = 'sudah' if status_pengembalian == 'kembali' else 'belum'
+            params.append(status_pengembalian_val)
+
+        query += " ORDER BY t.tanggal_nota DESC"
+
+        cursor.execute(query, params)
+        data = cursor.fetchall()
+
+        # Ringkasan
+        ringkasan["total_transaksi"] = len(set(row['transaction_id'] for row in data))
+        ringkasan["total_produk"] = sum(row['product_qty'] for row in data)
+        ringkasan["total_belum_lunas"] = sum(row['product_qty'] for row in data if row['status_pembayaran'].lower() != 'lunas')
+        ringkasan["total_belum_kembali"] = sum(row['product_qty'] for row in data if row['status_pengembalian'].lower() != 'kembali')
+        ringkasan["total_pendapatan"] = sum(row['total_harga'] or 0 for row in data)
+
+        cursor.close()
+        conn.close()
+
+    return render_template(
+        'report/laporan.html',
+        data=data,
+        tanggal_dari=tanggal_dari,
+        tanggal_sampai=tanggal_sampai,
+        status_pembayaran=status_pembayaran,
+        status_pengembalian=status_pengembalian,
+        ringkasan=ringkasan,
+        user=current_user
+    )
+
+
 if __name__ == '__main__':
     app.run(debug=True)

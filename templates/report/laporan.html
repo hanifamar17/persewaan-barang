@@ -1,0 +1,240 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<section class="w-full p-10 bg-white rounded shadow text-gray-800">
+
+    <!-- Dashboard Header -->
+    <div class="text-center md:text-left space-y-2 mb-10 border-b border-gray-100 pb-6">
+        <h1 class="text-2xl font-semibold text-gray-800">Laporan Transaksi</h1>
+        <p class="text-gray-600 text-sm">Lihat laporan transaksi pada rentang waktu tertentu</p>
+    </div>
+
+    <!-- Filter Form -->
+    <form method="get" action="{{ url_for('laporan') }}" class="bg-gray-50 p-6 rounded-lg mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <!-- Tanggal Dari -->
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Dari Tanggal</label>
+                <input type="date" name="dari" value="{{ tanggal_dari or '' }}" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+
+            <!-- Tanggal Sampai -->
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Sampai Tanggal</label>
+                <input type="date" name="sampai" value="{{ tanggal_sampai or '' }}" required
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            </div>
+
+            <!-- Status Pembayaran -->
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Status Pembayaran</label>
+                <select name="status_pembayaran"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Semua Status</option>
+                    <option value="lunas" {% if status_pembayaran=='lunas' %}selected{% endif %}>Lunas</option>
+                    <option value="belum" {% if status_pembayaran=='belum' %}selected{% endif %}>Belum Lunas</option>
+                </select>
+            </div>
+
+            <!-- Status Pengembalian -->
+            <div class="space-y-2">
+                <label class="block text-sm font-medium text-gray-700">Status Pengembalian</label>
+                <select name="status_pengembalian"
+                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option value="">Semua Status</option>
+                    <option value="kembali" {% if status_pengembalian=='kembali' %}selected{% endif %}>Sudah Kembali
+                    </option>
+                    <option value="belum" {% if status_pengembalian=='belum' %}selected{% endif %}>Belum Kembali
+                    </option>
+                </select>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="flex items-end">
+                <button type="submit"
+                    class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200">
+                    Terapkan Filter
+                </button>
+            </div>
+        </div>
+    </form>
+
+    {% if tanggal_dari and tanggal_sampai %}
+    <!-- Periode Info -->
+    <div class="mb-6">
+        <div class="bg-blue-50 border-l-4 border-blue-400 px-4 py-3 rounded-r-lg">
+            <h3 class="font-semibold text-blue-900">Periode: {{ tanggal_dari|tanggal_id }} s.d {{
+                tanggal_sampai|tanggal_id }}</h3>
+        </div>
+    </div>
+
+    <!-- Data Table -->
+
+    <div class="overflow-x-auto w-full">
+        <table id="laporan-table" class="w-full text-sm divide-y divide-gray-200">
+            <thead class="bg-gray-100">
+                <tr class="bg-gray-50">
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No</th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">No Nota
+                    </th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Nota
+                    </th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Sewa
+                    </th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tgl Kembali
+                    </th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer
+                    </th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produk
+                    </th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lama Sewa
+                    </th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Harga Sewa
+                    </th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pembayaran
+                    </th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Pengembalian</th>
+                    <th class="px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Petugas
+                    </th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                {% for row in data %}
+                <tr class="odd:bg-white even:bg-gray-50 hover:bg-gray-100 text-sm">
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ loop.index }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{{ row.no_nota }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ row.tanggal_nota|tanggal_id }}
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ row.tanggal_sewa|tanggal_id }}
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ row.tanggal_kembali|tanggal_id }}
+                    </td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ row.customer_name }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ row.product_name }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ row.product_qty }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">{{ row.lama_sewa }} hari</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                        Rp{{"{:,.0f}".format(row.harga_sewa).replace(",", ".") }}</td>
+                    <td class="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900">
+                        Rp{{"{:,.0f}".format(row.total_harga or 0).replace(",", ".") }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if row.status_pembayaran == 'lunas' %}
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i>
+                            Lunas
+                        </span>
+                        {% else %}
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            <i class="fas fa-clock mr-1"></i>
+                            Belum Lunas
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        {% if row.status_pengembalian == 'kembali' %}
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            Dikembalikan
+                        </span>
+                        {% else %}
+                        <span
+                            class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            <i class="fas fa-hourglass-half mr-1"></i>
+                            Belum Kembali
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ row.user_name }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <h4>Ringkasan:</h4>
+    <ul>
+        <li>Total Transaksi: {{ ringkasan.total_transaksi }}</li>
+        <li>Total Produk Disewa: {{ ringkasan.total_produk }}</li>
+        <li>Belum Lunas: {{ ringkasan.total_belum_lunas }}</li>
+        <li>Belum Kembali: {{ ringkasan.total_belum_kembali }}</li>
+        <li>Total Pendapatan: Rp{{ "{:,.0f}".format(ringkasan.total_pendapatan).replace(",", ".") }}</li>
+    </ul>
+
+
+    {% else %}
+    <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">Tidak ada data</h3>
+        <p class="mt-1 text-sm text-gray-500">Tidak ada data transaksi untuk periode ini.</p>
+    </div>
+    {% endif %}
+
+
+
+
+</section>
+
+<!--datatables-->
+<script>
+    $(document).ready(function () {
+        $('#laporan-table').DataTable({
+            responsive: true,
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            language: {
+                search: "Cari:",
+                lengthMenu: "Tampilkan _MENU_ data",
+                info: "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+                paginate: {
+                    next: "Berikutnya",
+                    previous: "Sebelumnya"
+                }
+            },
+            columnDefs: [
+                {
+                    targets: 0,
+                    searchable: false,
+                    orderable: false,
+                    render: function (data, type, row, meta) {
+                        return meta.row + 1;
+                    }
+                }
+            ],
+            // Atur layout DOM untuk posisi elemen
+            dom: '<"flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4"<"mb-2 sm:mb-0"l><"mb-2 sm:mb-0 flex items-center justify-end gap-2"f<"tambah-btn">>>rt<"flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4"<"mb-2 sm:mb-0"i><"mb-2 sm:mb-0"p>>',
+
+            initComplete: function () {
+
+                // Styling untuk controls atas
+                $('.dataTables_length label').addClass('text-sm font-medium text-gray-700');
+                $('.dataTables_filter label').addClass('text-sm font-medium text-gray-700');
+                $('.dataTables_length select').addClass('ml-2 px-2 py-1 border border-gray-300 rounded text-sm');
+                $('.dataTables_filter input').addClass('ml-2 px-3 py-2 border border-gray-300 rounded text-sm');
+
+                // Styling untuk info dan pagination di bawah
+                $('.dataTables_info').addClass('text-sm text-gray-600');
+                $('.dataTables_paginate').addClass('flex text-sm');
+            },
+
+            drawCallback: function () {
+                // Style pagination buttons setiap kali table di-draw
+                $('.dataTables_paginate .paginate_button').addClass('mx-1 px-3 py-1 text-sm border border-gray-300 rounded hover:bg-gray-50');
+                $('.dataTables_paginate .paginate_button.current').addClass('bg-blue-500 text-white border-blue-500');
+                $('.dataTables_paginate .paginate_button.disabled').addClass('text-gray-400 cursor-not-allowed');
+            }
+        });
+    });
+</script>
+
+{% endblock %}
