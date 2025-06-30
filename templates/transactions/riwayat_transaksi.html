@@ -3,8 +3,8 @@
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <section class="w-full p-10 bg-white rounded shadow">
-    <div class="flex items-start justify-between mb-6">
-        <div class="text-left space-y-2 mb-8">
+    <div class="flex items-start justify-between mb-10 border-b border-gray-100">
+        <div class="text-left space-y-2 mb-2">
             <h1 class="text-xl font-semibold text-gray-800">Riwayat Transaksi Sewa</h1>
             <p class="text-gray-600 text-sm">Lihat transaksi sewa</p>
         </div>
@@ -26,7 +26,7 @@
                     title="Sampai Tanggal">
             </div>
             <button type="submit"
-                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center gap-1">
+                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 text-sm font-medium rounded-md transition-colors duration-200 flex items-center gap-1 cursor-pointer">
                 <i class="fas fa-filter text-xs"></i>
                 Filter
             </button>
@@ -57,7 +57,9 @@
                 <tr class="odd:bg-white even:bg-gray-50 hover:bg-gray-100 text-sm">
                     <td class="px-3 py-2 whitespace-nowrap text-gray-900">{{ loop.index }}</td>
                     <td class="px-3 py-2 whitespace-nowrap">
-                        <div class="font-medium text-gray-900">{{ t.no_nota }}</div>
+                        <div class="font-medium text-blue-600 hover:text-blue-800"><a
+                                href="{{ url_for('detail_transaksi', transaction_id=t.transaction_id) }}">{{ t.no_nota
+                                }}</a></div>
                     </td>
                     <td class="px-3 py-2 whitespace-nowrap">
                         {{ t.customer_name }}
@@ -126,7 +128,9 @@
                                     </a>
                                     <div class="border-t border-gray-100 my-1"></div>
 
-                                    <a href="{{ url_for('delete_transaksi', transaction_id=t.transaction_id) }}"
+                                    <a href="#"
+                                        data-href="{{ url_for('delete_transaksi', transaction_id=t.transaction_id) }}"
+                                        onclick="confirmDelete(this)"
                                         class="dropdown-item flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors">
                                         <i class="fas fa-trash text-red-600 w-4"></i>
                                         <span class="font-medium">Hapus</span>
@@ -225,5 +229,56 @@
     });
 </script>
 
+<!-- SweetAlert2 untuk konfirmasi hapus -->
+<script>
+    // Mixin untuk toast notifikasi
+    const Toast = Swal.mixin({
+        toast: true,
+        position: "top-end",
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+        }
+    });
+
+    function confirmDelete(element) {
+        const url = element.getAttribute('data-href');
+
+        Swal.fire({
+            title: 'Yakin ingin menghapus?',
+            text: "Data yang dihapus tidak bisa dikembalikan!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, hapus',
+            cancelButtonText: 'Batal'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // simpan flag berhasil ke localStorage
+                localStorage.setItem('deleteSuccess', 'true');
+                // redirect ke URL hapus
+                window.location.href = url;
+            }
+        });
+    }
+
+    // tampilkan SweetAlert sukses setelah reload
+    window.addEventListener('DOMContentLoaded', () => {
+        if (localStorage.getItem('deleteSuccess') === 'true') {
+            localStorage.removeItem('deleteSuccess');
+            Toast.fire({
+                icon: 'success',
+                title: 'Berhasil!',
+                text: 'Transaksi berhasil dihapus.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+    });
+</script>
 
 {% endblock %}

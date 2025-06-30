@@ -3,15 +3,21 @@
 {% block content %}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <section class="w-full p-10 bg-white rounded shadow">
-    <div class="flex items-start justify-between mb-6">
-        <div class="text-left space-y-2 mb-8 border-b border-gray-100 pb-4">
+    <div class="flex items-start justify-between mb-10 border-b border-gray-100">
+        <div class="text-left space-y-2 mb-2">
             <h1 class="text-xl font-semibold text-gray-800">Detail Riwayat Transaksi Sewa</h1>
             <p class="text-gray-600 text-sm">{{ transaction.no_nota }}</p>
         </div>
-        <a href="{{ url_for('cetak_nota', transaction_id=transaction.transaction_id) }}" target="_blank"
-            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition">
-            🧾 Cetak Nota
-        </a>
+        <div class="flex items-center space-x-4">
+            <a href="{{ url_for('edit_transaksi', transaction_id=transaction.transaction_id) }}"
+                class="inline-flex items-center px-4 border border-gray-300 py-2 hover:bg-blue-600 hover:text-white text-sm font-medium rounded transition">
+                <i class="fas fa-edit mr-2"></i> Edit
+            </a>
+            <a href="{{ url_for('cetak_nota', transaction_id=transaction.transaction_id) }}" target="_blank"
+                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition">
+                <i class="fa-solid fa-receipt mr-2"></i>Cetak Nota
+            </a>
+        </div>
     </div>
 
     <div class="mb-8 space-y-12">
@@ -109,9 +115,9 @@
                                     <th class="text-right px-3 py-3 text-gray-600 font-medium">Subtotal</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-gray-100">
+                            <tbody class="bg-white divide-y divide-gray-200">
                                 {% for detail in details %}
-                                <tr class="hover:bg-gray-50">
+                                <tr class="odd:bg-white even:bg-gray-50 hover:bg-gray-100 text-sm">
                                     <td class="px-3 py-3 text-gray-800">{{ detail.product_id }}</td>
                                     <td class="px-3 py-3 text-gray-800">{{ detail.product_name }}</td>
                                     <td class="px-3 py-3 text-center text-gray-600">{{ detail.product_qty }}</td>

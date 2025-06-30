@@ -8,7 +8,7 @@
     <style>
         body {
             margin: 0;
-            padding: 10px;
+            padding: 0 10px;
             font-size: 10pt;
             font-family: "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
             color: #1f2937;
@@ -52,16 +52,6 @@
             margin-right: 0;
         }
 
-        .section-title {
-            font-size: 14px;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #494848;
-            margin-bottom: 5px;
-            padding-top: 10px;
-        }
-
-
         .info-item {
             margin-bottom: 4px;
             overflow: hidden;
@@ -78,6 +68,14 @@
             font-size: 14px;
         }
 
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #494848;
+            margin-bottom: 5px;
+        }
+
         /* Table Styles */
         table {
             width: 100%;
@@ -89,7 +87,7 @@
             padding: 8px 12px;
             font-weight: bold;
             color: #4B5563;
-            background-color: #fffdec;
+            background-color: #f9fafb;
             text-align: left;
             text-transform: uppercase;
         }
@@ -222,7 +220,7 @@
             </td>
             <td style="vertical-align: middle;">
                 <span style="font-size: 24px; text-transform: uppercase; color: #474646;">Nota
-                    Transaksi</span>
+                    Sewa
             </td>
         </tr>
     </table>
@@ -241,10 +239,8 @@
                 <div class="info-label">Petugas</div>
                 <div class="info-value">: {{ data.transaction.user_name }}</div>
             </div>
-        </div>
 
-        <div class="info-col">
-            <div class="info-item">
+            <div class="info-item" style="padding-top: 10px;">
                 <div class="info-label">Tgl Sewa</div>
                 <div class="info-value">: {{ data.transaction.tanggal_sewa|tanggal_id }}</div>
             </div>
@@ -257,9 +253,7 @@
                 <div class="info-value">: {{ data.transaction.lama_sewa }} hari</div>
             </div>
         </div>
-    </div>
 
-    <div class="info-row">
         <div class="info-col">
             <div class="section-title">Pelanggan</div>
             <div class="info-item">
@@ -274,12 +268,19 @@
         </div>
     </div>
 
+    <div class="info-row">
+        <div class="info-col">
+            
+        </div>
+    </div>
+
     <br>
     <div class="table-section">
         <table>
             <thead>
                 <tr>
                     <th>No</th>
+                    <th>Kode Produk</th>
                     <th>Nama Produk</th>
                     <th class="text-center">Qty</th>
                     <th class="text-center">Lama Sewa</th>
@@ -291,6 +292,7 @@
                 {% for item in data.details %}
                 <tr class="{% if loop.index0 % 2 == 0 %}row-even{% else %}row-odd{% endif %}">
                     <td>{{ loop.index }}</td>
+                    <td>{{ item.product_id }}</td>
                     <td>{{ item.name }}</td>
                     <td class="text-center">{{ item.qty }}</td>
                     <td class="text-center">{{ item.lama_sewa }} hari</td>
@@ -332,8 +334,7 @@
     <div class="footer">
         <p class="footer-content1">Terima kasih atas kepercayaan Anda.</p>
         <p>Hubungi layanan pelanggan untuk informasi lebih lanjut.</p>
-        <p style="padding-top: 10px; font-style: italic;">Generated on: {{ now.strftime("%d %B %Y, %H:%M") }} (Western
-            Indonesia Time)</p>
+        <p style="padding-top: 10px; font-style: italic;">Generated on: {{ now.strftime("%d %B %Y, %H:%M") }} WIB</p>
     </div>
 </body>
 

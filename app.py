@@ -33,7 +33,7 @@ pdfkit_config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 def format_rupiah(amount):
     try:
         amount = float(amount)
-        return f"Rp{amount:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+        return f"Rp{amount:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
     except (ValueError, TypeError):
         return amount 
 
@@ -60,6 +60,12 @@ def format_tanggal_indonesia(tanggal):
     return f"{tanggal.day} {bulan} {tanggal.year}"
 
 app.jinja_env.filters['tanggal_id'] = format_tanggal_indonesia
+
+# --- Daftar bulan dalam bahasa Indonesia ---
+bulan_id = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+]
 
 # --- Load user by ID for session ---
 @login_manager.user_loader
@@ -111,7 +117,52 @@ def logout():
 @app.route('/dashboard')
 #@login_required
 def dashboard():
-    return render_template('index.html', user=current_user)
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    # 1. Total transaksi
+    cursor.execute("SELECT COUNT(*) FROM transactions")
+    total_transaksi = cursor.fetchone()[0]
+
+    # 2. Total produk disewa
+    cursor.execute("SELECT SUM(product_qty) FROM transaction_details")
+    total_produk_diseswa = cursor.fetchone()[0] or 0
+
+    # 3. 3 produk yang sering disewa
+    cursor.execute("""
+        SELECT p.name AS product_name, c.name AS category_name, SUM(td.product_qty) as total
+        FROM transaction_details td
+        JOIN products p ON td.product_id = p.product_id
+        JOIN categories c ON p.category_id = c.category_id
+        GROUP BY p.name, c.name
+        ORDER BY total DESC
+        LIMIT 3
+    """)
+    top_produk = cursor.fetchall()  # list of tuples: (product_name, total)
+
+    # 4. Total produk yang belum kembali
+    cursor.execute("""
+        SELECT SUM(td.product_qty)
+        FROM transaction_details td
+        JOIN transactions t ON td.transaction_id = t.transaction_id
+        WHERE t.status_pembayaran != 'lunas'
+    """)
+    total_belum_kembali = cursor.fetchone()[0] or 0
+
+    cursor.close()
+    conn.close()
+
+    now = datetime.now()
+    bulan = bulan_id[now.month - 1]
+    return render_template(
+        'index.html',
+        user=current_user,
+        total_transaksi=total_transaksi,
+        total_produk_diseswa=total_produk_diseswa,
+        top_produk=top_produk,
+        total_belum_kembali=total_belum_kembali,
+        bulan=bulan
+    )
 
 ## MODULE MANAJEMEN USER
 #--- Route: Halaman user --- 
@@ -1018,7 +1069,7 @@ def cetak_nota(transaction_id):
 
         # Ambil detail produk
         cursor.execute("""
-            SELECT td.product_qty AS qty, td.harga_sewa AS harga, p.name, t.lama_sewa
+            SELECT td.product_qty AS qty, td.harga_sewa AS harga, p.name, p.product_id, t.lama_sewa
             FROM transaction_details td
             JOIN products p ON td.product_id = p.product_id
             JOIN transactions t ON td.transaction_id = t.transaction_id
