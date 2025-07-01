@@ -28,7 +28,12 @@
     <nav class="flex pb-4" aria-label="Breadcrumb">
       <ol class="inline-flex items-center space-x-1 md:space-x-2 rtl:space-x-reverse">
         <li class="inline-flex items-center">
-          <a class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+          <a class="inline-flex items-center text-sm font-medium
+          {% if request.path == '/categories' %}
+                    text-gray-400
+                    {% else %}
+                    self-center
+                    {% endif %}">
             Kategori Produk
           </a>
         </li>

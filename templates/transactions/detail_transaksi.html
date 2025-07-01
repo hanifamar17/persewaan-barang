@@ -10,12 +10,16 @@
         </div>
         <div class="flex items-center space-x-4">
             <a href="{{ url_for('edit_transaksi', transaction_id=transaction.transaction_id) }}"
-                class="inline-flex items-center px-4 border border-gray-300 py-2 hover:bg-blue-600 hover:text-white text-sm font-medium rounded transition">
+                class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-md transition-colors duration-200 border border-gray-200 cursor-pointer">
                 <i class="fas fa-edit mr-2"></i> Edit
             </a>
+            <button onclick="bagikanNota('{{ transaction.transaction_id }}')"
+                class="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 rounded-md transition-colors duration-200 border border-gray-200 cursor-pointer">
+                <i class="fa-solid fa-share-from-square mr-2"></i>Bagikan
+            </button>
             <a href="{{ url_for('cetak_nota', transaction_id=transaction.transaction_id) }}" target="_blank"
                 class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded hover:bg-blue-700 transition">
-                <i class="fa-solid fa-receipt mr-2"></i>Cetak Nota
+                <i class="fa-solid fa-receipt mr-2"></i>Cetak
             </a>
         </div>
     </div>
@@ -235,5 +239,53 @@
         <span class="border-b border-transparent group-hover:border-indigo-600 transition-colors">Kembali</span>
     </a>
 </section>
+
+<script>
+    const Toast = Swal.mixin({
+        toast: true,
+        position: 'top-end',
+        showConfirmButton: false,
+        timer: 2500,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+            toast.onmouseenter = Swal.stopTimer;
+            toast.onmouseleave = Swal.resumeTimer;
+        }
+    });
+
+    function bagikanNota(transactionId) {
+        const url = `${window.location.origin}/cetak-nota/${transactionId}`;
+
+        if (navigator.share) {
+            // Gunakan native share TANPA toast
+            navigator.share({
+                title: 'Nota Sewa',
+                text: 'Berikut link nota sewa Anda:',
+                url: url
+            }).catch((err) => {
+                console.error('Gagal menggunakan share:', err);
+                // Jika gagal (misal ditutup), fallback ke salin
+                fallbackSalin(url);
+            });
+        } else {
+            fallbackSalin(url);
+        }
+    }
+
+    function fallbackSalin(url) {
+        navigator.clipboard.writeText(url).then(() => {
+            Toast.fire({
+                icon: 'success',
+                title: 'Link disalin ke clipboard!'
+            });
+        }).catch(() => {
+            Toast.fire({
+                icon: 'error',
+                title: 'Gagal menyalin link.'
+            });
+        });
+    }
+</script>
+
 
 {% endblock %}

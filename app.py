@@ -112,14 +112,14 @@ def login():
 
 # --- Route: Logout ---
 @app.route('/logout')
-#@login_required
+@login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
 
 # --- Route: Dashboard (akses berdasarkan role) ---
 @app.route('/dashboard')
-#@login_required
+@login_required
 def dashboard():
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -186,7 +186,7 @@ def dashboard():
 ## MODULE MANAJEMEN USER
 #--- Route: Halaman user --- 
 @app.route('/user')
-#@login_required
+@login_required
 def user():
     if current_user.role not in ['superadmin', 'admin']:
         return "Access denied", 403
@@ -201,7 +201,7 @@ def user():
 
 # --- Route: Tambah User Baru (Hanya untuk admin) ---
 @app.route('/add_user', methods=['GET', 'POST'])
-#@login_required
+@login_required
 def add_user():
     if current_user.role not in ['superadmin', 'admin']:
         return "Access denied", 403
@@ -233,7 +233,7 @@ def add_user():
 
 #--- Route: Hapus user --- 
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
-#@login_required
+@login_required
 def delete_user(user_id):
     if current_user.role not in ['superadmin', 'admin']:
         return jsonify(status='error', message='Access denied'), 403
@@ -264,7 +264,7 @@ def delete_user(user_id):
 
 
 @app.route('/edit_user/<int:user_id>', methods=['GET', 'POST'])
-#@login_required
+@login_required
 def edit_user(user_id):
     if current_user.role not in ['superadmin', 'admin']:
         return "Access denied", 403
@@ -329,7 +329,7 @@ def edit_user(user_id):
 
 #--- Route: Halaman Pelanggan --- 
 @app.route('/customers')
-#@login_required
+@login_required
 def customers():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -341,7 +341,7 @@ def customers():
 
 # --- Route: Tambah Pelanggan Baru ---
 @app.route('/add_customer', methods=['GET', 'POST'])
-#@login_required
+@login_required
 def add_customer():
     if request.method == 'POST':
         try:
@@ -366,7 +366,7 @@ def add_customer():
 
 #--- Route: Hapus pelanggan --- 
 @app.route('/delete_customer/<int:customer_id>', methods=['POST'])
-#@login_required
+@login_required
 def delete_customer(customer_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -382,7 +382,7 @@ def delete_customer(customer_id):
     
 #--- Route: Edit pelanggan --- 
 @app.route('/edit_customer/<int:customer_id>', methods=['GET', 'POST'])
-#@login_required
+@login_required
 def edit_customer(customer_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -429,7 +429,7 @@ def edit_customer(customer_id):
 ## MODULE MANAJEMEN PRODUK
 #--- Route: Halaman Kategori --- 
 @app.route('/categories')
-#@login_required
+@login_required
 def categories():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -443,7 +443,7 @@ def categories():
 
 # --- Route: Tambah category ---
 @app.route('/add_category', methods=['GET', 'POST'])
-#@login_required
+@login_required
 def add_category():
     if request.method == 'POST':
         try:
@@ -498,7 +498,7 @@ def edit_category(category_id):
 
 #--- Route: Hapus category --- 
 @app.route('/delete_category/<int:category_id>', methods=['POST'])
-#@login_required
+@login_required
 def delete_category(category_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -514,7 +514,7 @@ def delete_category(category_id):
     
 #--- Route: Halaman produk --- 
 @app.route('/products')
-#@login_required
+@login_required
 def products():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -600,7 +600,7 @@ def edit_product(id):
     
 #--- Route: Hapus product --- 
 @app.route('/delete_product/<int:id>', methods=['POST'])
-#@login_required
+@login_required
 def delete_product(id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -618,7 +618,7 @@ def delete_product(id):
 ## MODULE TRANSAKSI
 #--- Route: Halaman transaksi --- 
 @app.route('/sewa')
-#@login_required
+@login_required
 def sewa():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -780,7 +780,7 @@ def simpan_transaksi():
 ## MODULE RIWAYAT TRANSAKSI
 #--- Route: Halaman riwayat transaksi --- 
 @app.route('/riwayat_transaksi')
-#@login_required
+@login_required
 def riwayat_transaksi():
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -823,7 +823,7 @@ def riwayat_transaksi():
 
 #--- Route: Halaman detai riwayat transaksi --- 
 @app.route('/transaksi/detail/<int:transaction_id>')
-# @login_required
+@login_required
 def detail_transaksi(transaction_id):
     try:
         conn = get_db_connection()
@@ -882,7 +882,7 @@ def detail_transaksi(transaction_id):
 
 #--- Route: Halaman edit transaksi --- 
 @app.route('/transaksi/edit/<int:transaction_id>', methods=['GET', 'POST'])
-# @login_required
+@login_required
 def edit_transaksi(transaction_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -1035,7 +1035,7 @@ def edit_transaksi(transaction_id):
 
 #--- Route: Hapus transaksi --- 
 @app.route('/delete_transaksi/<int:transaction_id>', methods=['GET', 'POST'])
-#@login_required
+@login_required
 def delete_transaksi(transaction_id):
     conn = get_db_connection()
     cursor = conn.cursor(dictionary=True)
@@ -1100,7 +1100,7 @@ def cetak_nota(transaction_id):
         conn.close()
 
         # Render HTML
-        rendered = render_template("transactions/nota.html", data={
+        rendered = render_template("transactions/nota_pdf.html", data={
             'transaction': transaction,
             'details': details,
         }, now=datetime.now(), logo_base64=logo_base64)
@@ -1128,7 +1128,7 @@ def cetak_nota(transaction_id):
 ## MODULE LAPORAN
 #--- Route: Halaman laporan transaksi ---
 @app.route('/laporan', methods=['GET', 'POST'])
-#@login_required
+@login_required
 def laporan():
     tanggal_dari = request.args.get('dari')
     tanggal_sampai = request.args.get('sampai')
@@ -1295,7 +1295,7 @@ def export_pdf():
 
 #--- Route: Export laporan transaksi ke Excel ---
 @app.route('/laporan/excel')
-#@login_required
+@login_required
 def export_excel():
     tanggal_dari = request.args.get('dari')
     tanggal_sampai = request.args.get('sampai')
