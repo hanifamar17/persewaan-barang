@@ -3,3 +3,4 @@ mysql-connector
 flask-login
 flask_wtf
 pdfkit
+openpyxl

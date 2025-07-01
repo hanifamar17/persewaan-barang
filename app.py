@@ -1,5 +1,5 @@
 import tempfile
-from flask import Flask, request, redirect, send_file, url_for, render_template, flash, jsonify, abort
+from flask import Flask, request, redirect, send_file, url_for, render_template, flash, jsonify, abort, Response
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from models import User
 from db import get_db_connection
@@ -11,6 +11,10 @@ from datetime import datetime, date
 import traceback
 import pdfkit
 import base64
+from io import BytesIO, StringIO
+from openpyxl import Workbook
+from openpyxl.styles import Font, Alignment, Border, Side, PatternFill
+import csv
 
 
 app = Flask(__name__)
@@ -128,7 +132,7 @@ def dashboard():
     cursor.execute("SELECT SUM(product_qty) FROM transaction_details")
     total_produk_diseswa = cursor.fetchone()[0] or 0
 
-    # 3. 3 produk yang sering disewa
+    # 3. produk yang sering disewa
     cursor.execute("""
         SELECT p.name AS product_name, c.name AS category_name, SUM(td.product_qty) as total
         FROM transaction_details td
@@ -149,6 +153,20 @@ def dashboard():
     """)
     total_belum_kembali = cursor.fetchone()[0] or 0
 
+    # 5. Total pendapatan bulan ini
+    now = datetime.now()
+    bulan_ini = now.month
+    tahun_ini = now.year
+
+    cursor.execute("""
+        SELECT SUM(td.product_qty * p.harga_sewa * t.lama_sewa) AS total_pendapatan
+        FROM transaction_details td
+        JOIN transactions t ON td.transaction_id = t.transaction_id
+        JOIN products p ON td.product_id = p.product_id
+        WHERE MONTH(t.tanggal_nota) = %s AND YEAR(t.tanggal_nota) = %s
+    """, (bulan_ini, tahun_ini))
+    total_per_bulan = cursor.fetchone()[0] or 0
+
     cursor.close()
     conn.close()
 
@@ -161,6 +179,7 @@ def dashboard():
         total_produk_diseswa=total_produk_diseswa,
         top_produk=top_produk,
         total_belum_kembali=total_belum_kembali,
+        total_per_bulan=total_per_bulan,
         bulan=bulan
     )
 
@@ -1182,6 +1201,352 @@ def laporan():
         ringkasan=ringkasan,
         user=current_user
     )
+
+#--- Route: Cetak PDF laporan transaksi ---
+@app.route("/laporan/pdf")
+def export_pdf():
+    try:
+        tanggal_dari = request.args.get('dari')
+        tanggal_sampai = request.args.get('sampai')
+        status_pembayaran = request.args.get('status_pembayaran') 
+        status_pengembalian = request.args.get('status_pengembalian')
+    
+        data = []
+        ringkasan = {
+            "total_transaksi": 0,
+            "total_produk": 0,
+            "total_belum_lunas": 0,
+            "total_belum_kembali": 0,
+            "total_pendapatan": 0
+        }
+    
+        if tanggal_dari and tanggal_sampai:
+            conn = get_db_connection()
+            cursor = conn.cursor(dictionary=True)
+    
+            # Ambil data transaksi dan detail produk
+            query = """
+                SELECT t.transaction_id, t.no_nota, t.tanggal_nota, t.tanggal_sewa, t.lama_sewa,
+                       t.tanggal_kembali, t.status_pembayaran, t.status_pengembalian, c.name AS customer_name,
+                       u.name AS user_name, p.name AS product_name, td.product_qty, p.harga_sewa,
+                       (td.product_qty * p.harga_sewa * t.lama_sewa) AS total_harga
+                FROM transactions t
+                JOIN users u ON t.user_id = u.user_id
+                JOIN customers c ON t.customer_id = c.customer_id
+                JOIN transaction_details td ON t.transaction_id = td.transaction_id
+                JOIN products p ON td.product_id = p.product_id
+                WHERE t.tanggal_nota BETWEEN %s AND %s 
+            """
+    
+            params = [tanggal_dari, tanggal_sampai]
+    
+            # Tambahkan filter status pembayaran
+            if status_pembayaran in ['lunas', 'belum']:
+                query += " AND t.status_pembayaran = %s"
+                status_pembayaran_val = 'lunas' if status_pembayaran == 'lunas' else 'belum lunas'
+                params.append(status_pembayaran_val)
+    
+            # Tambahkan filter status pengembalian
+            if status_pengembalian in ['kembali', 'belum']:
+                query += " AND t.status_pengembalian = %s"
+                status_pengembalian_val = 'sudah' if status_pengembalian == 'kembali' else 'belum'
+                params.append(status_pengembalian_val)
+    
+            query += " ORDER BY t.tanggal_nota DESC"
+    
+            cursor.execute(query, params)
+            data = cursor.fetchall()
+    
+            # Ringkasan
+            ringkasan["total_transaksi"] = len(set(row['transaction_id'] for row in data))
+            ringkasan["total_produk"] = sum(row['product_qty'] for row in data)
+            ringkasan["total_belum_lunas"] = sum(row['product_qty'] for row in data if row['status_pembayaran'].lower() != 'lunas')
+            ringkasan["total_belum_kembali"] = sum(row['product_qty'] for row in data if row['status_pengembalian'].lower() != 'kembali')
+            ringkasan["total_pendapatan"] = sum(row['total_harga'] or 0 for row in data)
+    
+            cursor.close()
+            conn.close()
+
+        # Render HTML
+        rendered = render_template('report/laporan_pdf.html', data=data, ringkasan=ringkasan,
+                               tanggal_dari=tanggal_dari, tanggal_sampai=tanggal_sampai,
+                               now=datetime.now(), logo_base64=logo_base64, user=current_user)
+
+        # Buat PDF sementara
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as pdf_file:
+            options = {
+                'page-size': 'A4',
+                'orientation': 'Landscape',
+                'margin-top': '15mm',
+                'margin-bottom': '15mm',
+                'margin-left': '15mm',
+                'margin-right': '15mm',
+                'encoding': 'UTF-8',
+            }
+
+            pdfkit.from_string(rendered, pdf_file.name, configuration=pdfkit_config, options=options)
+
+            pdf_file_path = pdf_file.name
+
+        return send_file(pdf_file_path, mimetype='application/pdf')
+
+    except Exception as e:
+        return f"Terjadi kesalahan: {str(e)}", 500
+
+#--- Route: Export laporan transaksi ke Excel ---
+@app.route('/laporan/excel')
+#@login_required
+def export_excel():
+    tanggal_dari = request.args.get('dari')
+    tanggal_sampai = request.args.get('sampai')
+    status_pembayaran = request.args.get('status_pembayaran') 
+    status_pengembalian = request.args.get('status_pengembalian')
+
+    data = []
+    ringkasan = {
+        "total_transaksi": 0,
+        "total_produk": 0,
+        "total_belum_lunas": 0,
+        "total_belum_kembali": 0,
+        "total_pendapatan": 0
+    }
+
+    if tanggal_dari and tanggal_sampai:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        query = """
+            SELECT t.transaction_id, t.no_nota, t.tanggal_nota, t.tanggal_sewa, t.lama_sewa,
+                   t.tanggal_kembali, t.status_pembayaran, t.status_pengembalian, c.name AS customer_name,
+                   u.name AS user_name, p.name AS product_name, td.product_qty, p.harga_sewa,
+                   (td.product_qty * p.harga_sewa * t.lama_sewa) AS total_harga
+            FROM transactions t
+            JOIN users u ON t.user_id = u.user_id
+            JOIN customers c ON t.customer_id = c.customer_id
+            JOIN transaction_details td ON t.transaction_id = td.transaction_id
+            JOIN products p ON td.product_id = p.product_id
+            WHERE t.tanggal_nota BETWEEN %s AND %s 
+        """
+
+        params = [tanggal_dari, tanggal_sampai]
+
+        # Tambahkan filter status pembayaran
+        if status_pembayaran in ['lunas', 'belum']:
+            query += " AND t.status_pembayaran = %s"
+            status_pembayaran_val = 'lunas' if status_pembayaran == 'lunas' else 'belum lunas'
+            params.append(status_pembayaran_val)
+
+        # Tambahkan filter status pengembalian
+        if status_pengembalian in ['kembali', 'belum']:
+            query += " AND t.status_pengembalian = %s"
+            status_pengembalian_val = 'sudah' if status_pengembalian == 'kembali' else 'belum'
+            params.append(status_pengembalian_val)
+
+        query += " ORDER BY t.tanggal_nota DESC"
+
+        cursor.execute(query, params)
+        data = cursor.fetchall()
+
+        # Ringkasan
+        ringkasan["total_transaksi"] = len(set(row['transaction_id'] for row in data))
+        ringkasan["total_produk"] = sum(row['product_qty'] for row in data)
+        ringkasan["total_belum_lunas"] = sum(row['product_qty'] for row in data if row['status_pembayaran'].lower() != 'lunas')
+        ringkasan["total_belum_kembali"] = sum(row['product_qty'] for row in data if row['status_pengembalian'].lower() != 'kembali')
+        ringkasan["total_pendapatan"] = sum(row['total_harga'] or 0 for row in data)
+
+        cursor.close()
+        conn.close()
+
+    # Buat workbook Excel
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Laporan Transaksi Persewaan"
+
+    # Gaya
+    bold_font = Font(bold=True)
+    center_align = Alignment(horizontal='center', vertical='center')
+    currency_format = '#,##0'
+    border_style = Border(
+        left=Side(style='thin'), right=Side(style='thin'),
+        top=Side(style='thin'), bottom=Side(style='thin')
+    )
+    header_fill = PatternFill("solid", fgColor="D9E1F2")
+
+    # Header
+    headers = [
+        'No Nota', 'Tanggal Nota', 'Tanggal Sewa', 'Tanggal Kembali', 'Pelanggan', 'Produk', 'Qty', 'Lama Sewa', 'Harga Sewa', 
+        'Subtotal', 'Pembayaran', 'Pengembalian', 'Petugas'
+    ]
+    ws.append(headers)
+
+    for col_num, col in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col_num)
+        cell.font = bold_font
+        cell.alignment = center_align
+        cell.fill = header_fill
+        cell.border = border_style
+
+    # Data
+    for i, row in enumerate(data, start=2):
+        ws.append([
+            row['no_nota'],
+            row['tanggal_nota'].strftime('%d-%m-%Y') if row['tanggal_nota'] else '',
+            row['tanggal_sewa'].strftime('%d-%m-%Y') if row['tanggal_nota'] else '',
+            row['tanggal_kembali'].strftime('%d-%m-%Y') if row['tanggal_nota'] else '',
+            row['customer_name'],
+            row['product_name'],
+            row['product_qty'],
+            row['lama_sewa'],
+            row['harga_sewa'],
+            row['total_harga'],
+            row['status_pembayaran'],
+            row['status_pengembalian'],
+            row['user_name']
+        ])
+        for col in range(1, 14):
+            cell = ws.cell(row=i, column=col)
+            cell.border = border_style
+            if col in [9, 10]:  # Harga sewa dan total
+                cell.number_format = currency_format
+    
+    # Auto-width kolom
+    for column_cells in ws.columns:
+        length = max(len(str(cell.value or '')) for cell in column_cells)
+        ws.column_dimensions[column_cells[0].column_letter].width = length + 2
+
+    # Spasi
+    ws.append([])
+    ws.append(['Ringkasan'])
+
+    # Ringkasan
+    ring_start_row = ws.max_row + 1
+    for label, key in [
+        ('Total Transaksi', 'total_transaksi'),
+        ('Total Produk Disewa', 'total_produk'),
+        ('Belum Lunas', 'total_belum_lunas'),
+        ('Belum Kembali', 'total_belum_kembali'),
+        ('Total Pendapatan', 'total_pendapatan')
+    ]:
+        ws.append([label, ringkasan[key]])
+
+    # Styling ringkasan
+    for i in range(ring_start_row, ws.max_row + 1):
+        for col in range(1, 3):
+            cell = ws.cell(row=i, column=col)
+            cell.border = border_style
+            if col == 2 and isinstance(cell.value, (int, float)):
+                cell.number_format = currency_format
+
+    # Simpan ke memori
+    output = BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    nama_file = f"Laporan_Transaksi_{tanggal_dari}_sd_{tanggal_sampai}.xlsx"
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=nama_file,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+
+#--- Route: Export laporan transaksi ke CSV ---
+@app.route('/laporan/csv')
+def export_csv():
+    tanggal_dari = request.args.get('dari')
+    tanggal_sampai = request.args.get('sampai')
+    status_pembayaran = request.args.get('status_pembayaran')
+    status_pengembalian = request.args.get('status_pengembalian')
+
+    if not tanggal_dari or not tanggal_sampai:
+        return "Tanggal tidak lengkap", 400
+
+    conn = get_db_connection()
+    cursor = conn.cursor(dictionary=True)
+
+    query = """
+        SELECT t.transaction_id, t.no_nota, t.tanggal_nota, t.tanggal_sewa, t.lama_sewa,
+               t.tanggal_kembali, t.status_pembayaran, t.status_pengembalian, c.name AS customer_name,
+               u.name AS user_name, p.name AS product_name, td.product_qty, p.harga_sewa,
+               (td.product_qty * p.harga_sewa * t.lama_sewa) AS total_harga
+        FROM transactions t
+        JOIN users u ON t.user_id = u.user_id
+        JOIN customers c ON t.customer_id = c.customer_id
+        JOIN transaction_details td ON t.transaction_id = td.transaction_id
+        JOIN products p ON td.product_id = p.product_id
+        WHERE t.tanggal_nota BETWEEN %s AND %s
+    """
+    params = [tanggal_dari, tanggal_sampai]
+
+    if status_pembayaran in ['lunas', 'belum']:
+        query += " AND t.status_pembayaran = %s"
+        params.append('lunas' if status_pembayaran == 'lunas' else 'belum lunas')
+
+    if status_pengembalian in ['kembali', 'belum']:
+        query += " AND t.status_pengembalian = %s"
+        params.append('sudah' if status_pengembalian == 'kembali' else 'belum')
+
+    query += " ORDER BY t.tanggal_nota DESC"
+    cursor.execute(query, params)
+    data = cursor.fetchall()
+
+    # Hitung ringkasan
+    ringkasan = {
+        "total_transaksi": len(set(row['transaction_id'] for row in data)),
+        "total_produk": sum(row['product_qty'] for row in data),
+        "total_belum_lunas": sum(row['product_qty'] for row in data if row['status_pembayaran'].lower() != 'lunas'),
+        "total_belum_kembali": sum(row['product_qty'] for row in data if row['status_pengembalian'].lower() != 'kembali'),
+        "total_pendapatan": sum(row['total_harga'] or 0 for row in data)
+    }
+
+    cursor.close()
+    conn.close()
+
+    # Tulis CSV
+    output = StringIO()
+    writer = csv.writer(output, delimiter=';', quoting=csv.QUOTE_MINIMAL)
+
+    # Header
+    writer.writerow([
+        'No Nota', 'Tanggal Nota', 'Tanggal Sewa', 'Tanggal Kembali', 'Pelanggan', 'Produk', 'Qty', 'Lama Sewa', 'Harga Sewa', 
+        'Subtotal', 'Pembayaran', 'Pengembalian', 'Petugas'
+    ])
+
+    # Data
+    for row in data:
+        writer.writerow([
+            row['no_nota'],
+            row['tanggal_nota'].strftime('%d-%m-%Y') if row['tanggal_nota'] else '',
+            row['tanggal_sewa'].strftime('%d-%m-%Y') if row['tanggal_nota'] else '',
+            row['tanggal_kembali'].strftime('%d-%m-%Y') if row['tanggal_nota'] else '',
+            row['customer_name'],
+            row['product_name'],
+            row['product_qty'],
+            row['lama_sewa'],
+            row['harga_sewa'],
+            row['total_harga'],
+            row['status_pembayaran'],
+            row['status_pengembalian'],
+            row['user_name']
+        ])
+
+    # Spasi dan Ringkasan
+    writer.writerow([])
+    writer.writerow(['Ringkasan'])
+    writer.writerow(['Total Transaksi', ringkasan["total_transaksi"]])
+    writer.writerow(['Total Produk Disewa', ringkasan["total_produk"]])
+    writer.writerow(['Belum Lunas', ringkasan["total_belum_lunas"]])
+    writer.writerow(['Belum Kembali', ringkasan["total_belum_kembali"]])
+    writer.writerow(['Total Pendapatan', ringkasan["total_pendapatan"]])
+
+    # Response
+    filename = f"Laporan_Transaksi_{tanggal_dari}_sd_{tanggal_sampai}.csv"
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
 
 
 if __name__ == '__main__':

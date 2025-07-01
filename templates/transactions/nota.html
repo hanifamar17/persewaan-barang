@@ -115,6 +115,10 @@
             text-align: right;
         }
 
+        .text-center {
+            text-align: center;
+        }
+
         /* Summary Table */
         .summary-table {
             width: 50%;
@@ -296,8 +300,8 @@
                     <td>{{ item.name }}</td>
                     <td class="text-center">{{ item.qty }}</td>
                     <td class="text-center">{{ item.lama_sewa }} hari</td>
-                    <td class="text-right">Rp{{ "{:,.0f}".format(item.harga).replace(",", ".") }}</td>
-                    <td class="text-right">Rp{{ "{:,.0f}".format(item.qty * item.harga * item.lama_sewa).replace(",",
+                    <td class="text-right currency">Rp{{ "{:,.0f}".format(item.harga).replace(",", ".") }}</td>
+                    <td class="text-right currency">Rp{{ "{:,.0f}".format(item.qty * item.harga * item.lama_sewa).replace(",",
                         ".") }}</td>
                 </tr>
                 {% endfor %}
@@ -307,7 +311,7 @@
         <table class="summary-table">
             <tr style="background-color: #f9fafb;">
                 <td>Total Pembayaran</td>
-                <td class="text-right">Rp{{ "{:,.0f}".format(data.transaction.total or 0).replace(",", ".") }}</td>
+                <td class="text-right currency">Rp{{ "{:,.0f}".format(data.transaction.total or 0).replace(",", ".") }}</td>
             </tr>
             <tr>
                 <td>Status Pembayaran</td>

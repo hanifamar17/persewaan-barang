@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-size: 11pt;
+            font-family: "Segoe UI", "Helvetica Neue", "Arial", sans-serif;
+            color: #1f2937;
+            line-height: 1.5;
+            background-color: #ffffff;
+        }
+
+        h2 {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        thead th {
+            padding: 8px 12px;
+            font-weight: bold;
+            color: #4B5563;
+            background-color: #f9fafb;
+            text-align: left;
+            text-transform: uppercase;
+        }
+
+        tbody td {
+            padding: 6px 12px;
+            border-bottom: 0.5px solid #dee2e6;
+        }
+
+        tbody tr:hover {
+            background-color: #e8f0fe;
+        }
+
+        .row-even {
+            background-color: #ffffff;
+            /* abu-abu terang - mirip Tailwind slate-100 */
+        }
+
+        .row-odd {
+            background-color: #f9fafb;
+            /* putih */
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        /* Summary Table */
+        .summary-table {
+            width: 25%;
+            float: right;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .currency {
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="invoice-header">
+        <table style="width: 100%; border-bottom: 1px solid #bfc3c9; margin-bottom: 20px;">
+            <tr>
+                <td style="width: 5px; vertical-align: middle;">
+                    <img src="data:image/png;base64,{{ logo_base64 }}" alt="Logo" style="height: 30px;">
+                </td>
+                <td style="vertical-align: middle;">
+                    <span style="font-size: 24px; text-transform: uppercase; color: #474646;">Laporan Transaksi Sewa
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    {% if tanggal_dari and tanggal_sampai %}
+    <!-- TAMPILKAN TABEL & RINGKASAN -->
+    <div class="header-left">
+        <div class="info-row">
+            <span class="info-label">Periode</span>
+            <span>{{ tanggal_dari|tanggal_id }}</span>
+            <span class="info-label">s.d</span>
+            <span>{{ tanggal_sampai|tanggal_id }}</span>
+        </div>
+        <div class="info-row" style="font-style: italic;">
+            <span class="info-label">Digenerate pada </span>
+            <span>{{ now|tanggal_id }} WIB oleh {{ user.name }}</span>
+        </div>
+    </div>
+
+    <div>
+        <h2>Detail Produk</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th width="20%">No Nota</th>
+                    <th width="20%">Tgl Nota</th>
+                    <th width="20%">Tgl Sewa</th>
+                    <th width="20%">Tgl Kembali</th>
+                    <th width="30%">Pelanggan</th>
+                    <th width="45%">Produk</th>
+                    <th width="10%" class="text-center">Qty</th>
+                    <th width="20%" class="text-center">Lama</th>
+                    <th width="35%" class="text-right">Harga</th>
+                    <th width="35%" class="text-right">Subtotal</th>
+                    <th width="35%">Pembayaran</th>
+                    <th width="35%">Pengembalian</th>
+                    <th width="30%">Petugas</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr class="{% if loop.index0 % 2 == 0 %}row-even{% else %}row-odd{% endif %}">
+                    <td>{{ row.no_nota }}</td>
+                    <td>{{ row.tanggal_nota|tanggal_id }}</td>
+                    <td>{{ row.tanggal_sewa|tanggal_id }}</td>
+                    <td>{{ row.tanggal_kembali|tanggal_id }}</td>
+                    <td>{{ row.customer_name }}</td>
+                    <td>{{ row.product_name }}</td>
+                    <td class="text-center">{{ row.product_qty }}</td>
+                    <td class="text-center">{{ row.lama_sewa }} hari</td>
+                    <td class="text-right currency">Rp{{"{:,.0f}".format(row.harga_sewa).replace(",", ".") }}</td>
+                    <td class="text-right currency">Rp{{"{:,.0f}".format(row.total_harga or 0).replace(",", ".") }}</td>
+                    <td>
+                        {% if row.status_pembayaran == 'lunas' %}
+                        <span>Lunas</span>
+                        {% else %}
+                        <span>Belum Lunas</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if row.status_pengembalian == 'kembali' %}
+                        <span>Dikembalikan</span>
+                        {% else %}
+                        <span>Belum Kembali</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ row.user_name }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div>
+        <table class="summary-table">
+            <tr>
+                <td>Total Transaksi</td>
+                <td class="text-right">{{ ringkasan.total_transaksi }} transaksi</td>
+            </tr>
+            <tr style="background-color: #f9fafb;">
+                <td>Total Produk Disewa</td>
+                <td class="text-right">{{ ringkasan.total_produk }} produk</td>
+            </tr>
+            <tr>
+                <td>Belum Lunas</td>
+                <td class="text-right">{{ ringkasan.total_belum_lunas }} produk</td>
+            </tr>
+            <tr style="background-color: #f9fafb;">
+                <td>Belum Kembali</td>
+                <td class="text-right">{{ ringkasan.total_belum_kembali }} produk</td>
+            </tr>
+            <tr>
+                <td>Total Pendapatan</td>
+                <td class="text-right currency bold">Rp{{ "{:,.0f}".format(ringkasan.total_pendapatan).replace(",",
+                    ".") }}</td>
+            </tr>
+        </table>
+    </div>
+    {% else %}
+    <p style="font-style: italic;">Tidak ada transaksi untuk periode yang dipilih.</p>
+    {% endif %}
+
+
+</body>
+
+</html>
